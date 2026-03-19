@@ -1,0 +1,4 @@
+plan_id,ticker,name,shares,buy_price,current_price,fx_to_czk
+1,CSPX,iShares Core S&P 500,10,480,470,23.15
+2,IWDA,iShares Core MSCI World,15,75,80,23.15
+2,EIMI,iShares Core EM IMI,8,31,33,23.15
