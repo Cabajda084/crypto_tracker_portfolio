@@ -351,15 +351,54 @@ total_pnl_czk = crypto_total_pnl_czk + invest_total_pnl_czk + investown_total_pn
 total_pnl_pct_all = (total_pnl_czk / total_invested_czk * 100) if total_invested_czk > 0 else 0.0
 
 st.caption(f"Aktuální kurz: 1 USD = {usdczk:.2f} CZK")
+# =========================================================
+# 🔝 SIMPLE OVERVIEW (NEW - SAFE)
+# =========================================================
 
-top1, top2, top3 = st.columns(3)
+st.subheader("Rychlý přehled")
+
+# --- Crypto ---
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.metric("Crypto Investováno", fmt_czk(crypto_total_cost_czk))
+with c2:
+    st.metric("Crypto Hodnota", fmt_czk(crypto_total_value_czk))
+with c3:
+    st.metric("Crypto P/L", fmt_czk(crypto_total_pnl_czk), f"{total_pnl_pct:.2f}%")
+
+st.divider()
+
+# --- Invest ---
+i1, i2, i3 = st.columns(3)
+with i1:
+    st.metric("Invest Investováno", fmt_czk(invest_total_cost_czk))
+with i2:
+    st.metric("Invest Hodnota", fmt_czk(invest_total_value_czk))
+with i3:
+    st.metric("Invest P/L", fmt_czk(invest_total_pnl_czk), f"{invest_total_pnl_pct:.2f}%")
+
+st.divider()
+
+# --- Investown ---
+j1, j2, j3 = st.columns(3)
+with j1:
+    st.metric("Investown Investováno", fmt_czk(investown_total_cost_czk))
+with j2:
+    st.metric("Investown Hodnota", fmt_czk(investown_total_value_czk))
+with j3:
+    st.metric("Investown P/L", fmt_czk(investown_total_pnl_czk), f"{investown_total_pnl_pct:.2f}%")
+
+st.divider()
+
+# 🔝 HLAVNÍ ČÍSLO NAHOŘE
+st.metric("Celkem investováno", fmt_czk(total_invested_czk))
+
+# 🔽 Doplňkové metriky
+top1, top2 = st.columns(2)
 with top1:
-    st.metric("Celková Net Worth", fmt_czk(net_worth_czk))
+    st.metric("Celková hodnota portfolia", fmt_czk(net_worth_czk))
 with top2:
-    st.metric("Celkem investováno", fmt_czk(total_invested_czk))
-with top3:
     st.metric("Celkový zisk / ztráta", fmt_czk(total_pnl_czk), f"{total_pnl_pct_all:.2f}%")
-
 st.divider()
 
 # =========================================================

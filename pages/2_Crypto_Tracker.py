@@ -250,6 +250,7 @@ pnl_pct_total = (total_pnl / total_cost * 100) if total_cost > 0 else 0.0
 
 st.caption(f"Aktuální kurz: 1 USD = {usdczk:.2f} CZK")
 
+
 c1, c2, c3 = st.columns(3)
 with c1:
     st.metric("Investováno", format_czk(invested_czk))
