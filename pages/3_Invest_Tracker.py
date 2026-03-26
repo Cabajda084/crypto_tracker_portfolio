@@ -5,7 +5,6 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Optional, Tuple
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -18,7 +17,6 @@ from invest_service import (
     get_trades,
     get_planned_orders,
     get_latest_prices,
-    get_snapshots,
     get_import_logs,
     compute_summary,
     get_plan_assets_overview,
@@ -27,7 +25,11 @@ from invest_service import (
     get_stock_portfolio_summary,
     get_stock_transactions,
     import_xtb_my_trades_from_dataframe,
+    add_stock_transaction,
+    
 )
+
+from invest_stock_service import delete_manual_stock_transaction
 
 try:
     import yfinance as yf
@@ -96,36 +98,304 @@ FX_TICKERS = {"EUR": "EURCZK=X", "USD": "USDCZK=X", "CZK": None}
 def inject_css():
     st.markdown("""
     <style>
-    .block-container {max-width: 1400px; padding-top: 1.8rem; padding-bottom: 2rem;}
-    .hero-card, .section-card, .plan-card, .mini-card {
-        background: #fff;
-        border: 1px solid #eaeaea;
-        border-radius: 22px;
-        box-shadow: 0 8px 28px rgba(15,23,42,.04);
+    .block-container {
+        max-width: 1400px;
+        padding-top: 1.15rem;
+        padding-bottom: 2rem;
     }
-    .hero-card {padding: 26px 28px; margin-bottom: 14px;}
-    .hero-label {font-size: .95rem; color: #6b7280; margin-bottom: 8px;}
-    .hero-value {font-size: 3rem; font-weight: 800; line-height: 1.05; color: #111827;}
-    .hero-profit-pos,.profit-pos {color:#16a34a; font-weight:700;}
-    .hero-profit-neg,.profit-neg {color:#dc2626; font-weight:700;}
 
-    .plan-card {padding: 16px 18px; margin-bottom: 10px;}
-    .plan-card.selected {border-color:#dbeafe; background:linear-gradient(180deg,#fff 0%,#f8fbff 100%);}
-    .plan-row {display:flex; justify-content:space-between; align-items:center; gap:16px;}
-    .plan-left {display:flex; gap:14px; align-items:center;}
-    .plan-icon {width:50px; height:50px; border-radius:16px; background:#f3f4f6; display:flex; align-items:center; justify-content:center; font-size:24px;}
-    .plan-title {font-size:1.15rem; font-weight:800; color:#111827;}
-    .plan-sub {font-size:.92rem; color:#6b7280;}
-    .plan-value {font-size:1.55rem; font-weight:800; color:#111827; text-align:right;}
-    .plan-pnl {font-size:.96rem; text-align:right;}
+    .app-subtitle {
+        color: #6b7280;
+        font-size: 0.98rem;
+        margin-top: -0.35rem;
+        margin-bottom: 1rem;
+    }
 
-    .mini-card {padding: 14px 16px;}
-    .mini-label {font-size:.92rem; color:#6b7280; margin-bottom:6px;}
-    .mini-value {font-size:1.45rem; font-weight:800; color:#111827; line-height:1.15;}
+    .hero-card,
+    .surface-card,
+    .plan-card,
+    .mini-card,
+    .asset-card,
+    .info-card,
+    .asset-select-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 24px;
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+    }
 
-    .section-card {padding:18px 20px;}
-    .soft-gap {height: 14px;}
-    .muted {color:#6b7280;}
+    .hero-card {
+        padding: 28px 30px;
+        margin-bottom: 1rem;
+        background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+    }
+
+    .hero-label {
+        font-size: 0.92rem;
+        color: #6b7280;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.45rem;
+    }
+
+    .hero-value {
+        font-size: 3rem;
+        font-weight: 800;
+        line-height: 1.05;
+        color: #111827;
+        margin-bottom: 0.45rem;
+    }
+
+    .hero-subrow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        color: #6b7280;
+        font-size: 0.97rem;
+    }
+
+    .pill-positive,
+    .pill-negative,
+    .pill-neutral {
+        display: inline-block;
+        padding: 0.24rem 0.58rem;
+        border-radius: 999px;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .pill-positive {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    .pill-negative {
+        color: #991b1b;
+        background: #fee2e2;
+    }
+
+    .pill-neutral {
+        color: #374151;
+        background: #f3f4f6;
+    }
+
+    .section-title {
+        font-size: 1.18rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 0.2rem;
+    }
+
+    .section-desc {
+        color: #6b7280;
+        font-size: 0.94rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .surface-card {
+        padding: 20px 20px 18px 20px;
+    }
+
+    .plan-card {
+        padding: 18px 18px;
+        margin-bottom: 0.8rem;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+    }
+
+    .plan-card.selected {
+        border-color: #dbeafe;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .plan-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .plan-left {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+    }
+
+    .plan-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .plan-title {
+        font-size: 1.12rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 0.18rem;
+    }
+
+    .plan-sub {
+        font-size: 0.92rem;
+        color: #6b7280;
+    }
+
+    .plan-value {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #111827;
+        text-align: right;
+        line-height: 1.1;
+        margin-bottom: 0.18rem;
+    }
+
+    .plan-pnl {
+        font-size: 0.94rem;
+        text-align: right;
+    }
+
+    .mini-card {
+        padding: 16px 16px;
+        height: 100%;
+        margin-bottom: 0.75rem;
+    }
+
+    .mini-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 0.38rem;
+        font-weight: 600;
+    }
+
+    .mini-value {
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1.15;
+    }
+
+    .mini-delta {
+        margin-top: 0.28rem;
+        font-size: 0.92rem;
+    }
+
+    .asset-card {
+        padding: 16px 18px;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+    }
+
+    .asset-card.selected {
+        border-color: #dbeafe;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    }
+
+    .asset-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .asset-title {
+        color: #111827;
+        font-size: 1.02rem;
+        font-weight: 800;
+        margin-bottom: 0.2rem;
+    }
+
+    .asset-sub {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .asset-value {
+        color: #111827;
+        font-size: 1.25rem;
+        font-weight: 800;
+        text-align: right;
+        line-height: 1.15;
+    }
+
+    .asset-pnl {
+        text-align: right;
+        margin-top: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .asset-select-card {
+        padding: 18px 18px;
+        margin-bottom: 0.9rem;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+    }
+
+    .info-card {
+        padding: 14px 16px;
+        margin-bottom: 0.8rem;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
+    }
+
+    .muted {
+        color: #6b7280;
+    }
+
+    .soft-gap {
+        height: 12px;
+    }
+
+    .soft-gap-lg {
+        height: 18px;
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 0.8rem;
+            padding-bottom: 1.25rem;
+            padding-left: 0.8rem;
+            padding-right: 0.8rem;
+        }
+
+        .hero-card,
+        .surface-card,
+        .plan-card,
+        .mini-card,
+        .asset-card,
+        .info-card,
+        .asset-select-card {
+            border-radius: 20px;
+        }
+
+        .hero-card {
+            padding: 20px 18px;
+        }
+
+        .hero-value {
+            font-size: 2.2rem;
+        }
+
+        .plan-row,
+        .asset-top {
+            display: block;
+        }
+
+        .plan-value,
+        .plan-pnl,
+        .asset-value,
+        .asset-pnl {
+            text-align: left;
+            margin-top: 0.55rem;
+        }
+
+        .plan-left {
+            align-items: flex-start;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -547,13 +817,47 @@ def read_xtb_sheet(xls: pd.ExcelFile, sheet_name: str) -> pd.DataFrame:
     df.columns = [str(c).strip() for c in df.columns]
     return df.dropna(how="all")
 
+
+def guess_yfinance_symbol_for_stock(ticker: str) -> str:
+    t = str(ticker).strip().upper()
+    if t.endswith(".US"):
+        return t[:-3]
+    return t
+
+
+def add_manual_my_trade_buy(
+    ticker: str,
+    instrument_name: str,
+    trade_date: str,
+    quantity: float,
+    price_per_share: float,
+    currency: str,
+):
+    ticker_clean = str(ticker).strip().upper()
+    instrument_clean = str(instrument_name).strip() if instrument_name else ticker_clean
+    currency_clean = str(currency).strip().upper()
+
+    try:
+        add_stock_transaction(
+            ticker=ticker_clean,
+            name=instrument_clean,
+            side="BUY",
+            quantity=float(quantity),
+            price_per_share=float(price_per_share),
+            currency=currency_clean,
+            trade_date=trade_date,
+            source="manual",
+        )
+
+        return {"imported": 1, "skipped": 0}
+
+    except Exception as e:
+        return {"imported": 0, "skipped": 0, "error": str(e)}
+
 def import_xtb_report(uploaded_file, product_filter: str = "Investment Plans"):
     xls = pd.ExcelFile(io.BytesIO(uploaded_file.getvalue()))
     source_file = uploaded_file.name
 
-    # =========================================================
-    # STOCKS: XTB "My Trades" -> stock_transactions
-    # =========================================================
     if product_filter == "My Trades":
         inserted_cash = 0
         inserted_trades = 0
@@ -563,13 +867,11 @@ def import_xtb_report(uploaded_file, product_filter: str = "Investment Plans"):
         closed_df = read_xtb_sheet(xls, "Closed Positions")
         closed_df = closed_df[closed_df["Product"].astype(str).str.strip() == product_filter].copy()
 
-        # normalizace čísel
         if "Volume" in closed_df.columns:
             closed_df["Volume"] = pd.to_numeric(closed_df["Volume"], errors="coerce").fillna(0.0)
         if "Close Price" in closed_df.columns:
             closed_df["Close Price"] = pd.to_numeric(closed_df["Close Price"], errors="coerce").fillna(0.0)
 
-        # XTB -> Yahoo mapping
         stock_symbol_map = {
             "AMZN.US": "AMZN",
             "META.US": "META",
@@ -581,7 +883,6 @@ def import_xtb_report(uploaded_file, product_filter: str = "Investment Plans"):
             "DUOL": "DUOL",
         }
 
-        # název sloupce se může lišit podle exportu
         currency_col = None
         for candidate in ["Currency", "Profit currency", "Currency pair"]:
             if candidate in closed_df.columns:
@@ -628,9 +929,6 @@ def import_xtb_report(uploaded_file, product_filter: str = "Investment Plans"):
 
         return inserted_cash, inserted_trades, inserted_assets, skipped
 
-    # =========================================================
-    # ETF: XTB "Investment Plans" -> existing logic
-    # =========================================================
     inserted_cash = inserted_trades = inserted_assets = skipped = 0
 
     cash_df = read_xtb_sheet(xls, "Cash Operations")
@@ -777,15 +1075,26 @@ def import_xtb_report(uploaded_file, product_filter: str = "Investment Plans"):
     return inserted_cash, inserted_trades, inserted_assets, skipped
 
 
+def format_signed_czk(value: float) -> str:
+    return f"{value:+,.2f} CZK".replace(",", " ")
+
+
+def render_section_header(title: str, desc: str = ""):
+    st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
+    if desc:
+        st.markdown(f'<div class="section-desc">{desc}</div>', unsafe_allow_html=True)
+
+
 def render_hero(total):
-    cls = "hero-profit-pos" if total["profit_loss"] >= 0 else "hero-profit-neg"
+    profit_class = "pill-positive" if total["profit_loss"] >= 0 else "pill-negative"
     st.markdown(f"""
     <div class="hero-card">
         <div class="hero-label">Souhrn všech investičních plánů</div>
-        <div class="hero-value">{fmt_czk(total["positions_value"])}</div>
-        <div class="{cls}">Zisk / ztráta: {total["profit_loss"]:+,.2f} CZK ({total["profit_loss_pct"]:+,.2f}%)</div>
-        <div class="muted" style="margin-top:8px;">
-            Cash celkem: {fmt_czk(total["cash_balance"])} · Celkem plánů včetně cash: {fmt_czk(total["portfolio_value"])}
+        <div class="hero-value">{fmt_czk(total["portfolio_value"])}</div>
+        <div class="hero-subrow">
+            <span>Hodnota pozic: <strong>{fmt_czk(total["positions_value"])}</strong></span>
+            <span>Cash: <strong>{fmt_czk(total["cash_balance"])}</strong></span>
+            <span class="{profit_class}">{format_signed_czk(total["profit_loss"])} · {total["profit_loss_pct"]:+.2f}%</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -793,7 +1102,7 @@ def render_hero(total):
 
 def render_plan_card(plan, summary, selected):
     cls = "plan-card selected" if selected else "plan-card"
-    pnl_cls = "profit-pos" if summary["profit_loss"] >= 0 else "profit-neg"
+    pnl_class = "pill-positive" if summary["profit_loss"] >= 0 else "pill-negative"
     st.markdown(f"""
     <div class="{cls}">
       <div class="plan-row">
@@ -807,9 +1116,9 @@ def render_plan_card(plan, summary, selected):
           </div>
         </div>
         <div>
-          <div class="plan-value">{fmt_czk(summary['positions_value'])}</div>
-          <div class="plan-pnl {pnl_cls}">
-            Celkem {fmt_czk(summary['portfolio_value'])} · P/L {summary['profit_loss']:+,.2f} CZK ({summary['profit_loss_pct']:+,.2f}%)
+          <div class="plan-value">{fmt_czk(summary['portfolio_value'])}</div>
+          <div class="plan-pnl">
+            <span class="{pnl_class}">{format_signed_czk(summary['profit_loss'])} · {summary['profit_loss_pct']:+.2f}%</span>
           </div>
         </div>
       </div>
@@ -820,59 +1129,60 @@ def render_plan_card(plan, summary, selected):
 def render_mini(label, value, delta=None, positive=True):
     delta_html = ""
     if delta is not None:
-        delta_html = f'<div class="{"profit-pos" if positive else "profit-neg"}">{delta}</div>'
+        delta_class = "pill-positive" if positive else "pill-negative"
+        delta_html = f'<div class="mini-delta"><span class="{delta_class}">{delta}</span></div>'
     st.markdown(
-        f'<div class="mini-card"><div class="mini-label">{label}</div><div class="mini-value">{value}</div>{delta_html}</div>',
+        f"""
+        <div class="mini-card">
+            <div class="mini-label">{label}</div>
+            <div class="mini-value">{value}</div>
+            {delta_html}
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
 
-def render_allocations(positions: pd.DataFrame):
-    if positions.empty:
-        st.info("Zatím nejsou žádné investice v plánu.")
-        return
-    for _, r in positions.sort_values("allocation_pct", ascending=False).iterrows():
-        pct = max(0.0, min(float(r["allocation_pct"]), 100.0))
-        st.markdown(f"""
-        <div style="margin-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-            <div><b>{r['asset_name']}</b><br><span class="muted">{r['ticker']}</span></div>
-            <div style="text-align:right;"><b>{pct:.2f}%</b><br><span class="muted">{fmt_czk(float(r['current_value']))}</span></div>
-          </div>
-          <div style="height:10px;background:#f3f4f6;border-radius:999px;overflow:hidden;">
-            <div style="width:{pct}%;height:10px;background:linear-gradient(90deg,#60a5fa,#34d399);"></div>
-          </div>
+def render_asset_card(title: str, subtitle: str, value: str, pnl_text: str = "", pnl_positive=None, selected=False):
+    if pnl_positive is True:
+        pill_class = "pill-positive"
+    elif pnl_positive is False:
+        pill_class = "pill-negative"
+    else:
+        pill_class = "pill-neutral"
+
+    selected_class = " selected" if selected else ""
+    pnl_html = f'<span class="{pill_class}">{pnl_text}</span>' if pnl_text else ""
+
+    st.markdown(
+        f"""
+        <div class="asset-card{selected_class}">
+            <div class="asset-top">
+                <div>
+                    <div class="asset-title">{title}</div>
+                    <div class="asset-sub">{subtitle}</div>
+                </div>
+                <div>
+                    <div class="asset-value">{value}</div>
+                    <div class="asset-pnl">{pnl_html}</div>
+                </div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-
-
-def render_snapshot_chart(plan_id: str):
-    df = get_snapshots(plan_id)
-    if df.empty:
-        st.info("Zatím nejsou snapshoty portfolia.")
-        return
-
-    melt = df.melt(
-        id_vars=["snapshot_date"],
-        value_vars=["portfolio_value", "positions_value", "cash_balance"],
-        var_name="series",
-        value_name="value"
+        """,
+        unsafe_allow_html=True,
     )
-    name_map = {
-        "portfolio_value": "Celkem plán",
-        "positions_value": "Hodnota pozic",
-        "cash_balance": "Penížní rezerva",
-    }
-    melt["series"] = melt["series"].map(name_map)
 
-    chart = alt.Chart(melt).mark_line(point=True).encode(
-        x=alt.X("snapshot_date:T", title="Datum"),
-        y=alt.Y("value:Q", title="CZK"),
-        color=alt.Color("series:N", title=""),
-        tooltip=["snapshot_date:T", "series:N", alt.Tooltip("value:Q", format=",.2f")]
-    ).properties(height=320)
 
-    st.altair_chart(chart, use_container_width=True)
+def normalize_overview_numeric_columns(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    for col in [
+        "quantity", "avg_buy_price", "invested_amount",
+        "current_price", "current_value", "profit_loss",
+        "profit_loss_pct", "allocation_pct"
+    ]:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out
 
 
 st.set_page_config(page_title="Invest Tracker", page_icon="📈", layout="wide")
@@ -903,9 +1213,14 @@ total["profit_loss_pct"] = (total["profit_loss"] / total["cash_in_out"] * 100) i
 maybe_snapshot_today()
 
 st.title("📈 Invest Tracker")
+st.markdown(
+    '<div class="app-subtitle">Přehled investičních plánů, cen, transakcí a XTB importů v čistším modernějším layoutu.</div>',
+    unsafe_allow_html=True
+)
+
 render_hero(total)
 
-st.subheader("Investiční plány")
+render_section_header("Investiční plány", "Vyber plán, se kterým chceš pracovat.")
 for p in plans:
     render_plan_card(p, plan_summaries[p["plan_id"]], st.session_state.selected_invest_plan == p["plan_id"])
     if st.button(f"Otevřít {p['display_name']}", key=f"open_{p['plan_id']}", use_container_width=True):
@@ -933,14 +1248,22 @@ else:
     st.session_state.selected_asset_ticker = None
 
 st.markdown('<div class="soft-gap"></div>', unsafe_allow_html=True)
-st.markdown(f"## {selected_plan['icon']} {selected_plan['display_name']}")
-st.caption(f"Interní název plánu: {selected_plan['plan_name']} | Vlastník: {selected_plan['owner_name']}")
+
+render_section_header(
+    f"{selected_plan['icon']} {selected_plan['display_name']}",
+    f"Interní název plánu: {selected_plan['plan_name']} · Vlastník: {selected_plan['owner_name']}",
+)
 
 c1, c2, c3, c4, c5 = st.columns(5)
 with c1:
     render_mini("Hodnota pozic", fmt_czk(summary["positions_value"]))
 with c2:
-    render_mini("Zisk / ztráta", fmt_czk(summary["profit_loss"]), f"{summary['profit_loss_pct']:+.2f} %", summary["profit_loss"] >= 0)
+    render_mini(
+        "Zisk / ztráta",
+        fmt_czk(summary["profit_loss"]),
+        f"{summary['profit_loss_pct']:+.2f} %",
+        summary["profit_loss"] >= 0
+    )
 with c3:
     render_mini("Investováno", fmt_czk(summary["invested_amount"]))
 with c4:
@@ -951,174 +1274,217 @@ with c5:
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["Přehled", "Aktiva", "Budoucí nákupy", "Transakce", "Import XTB"])
 
 with tab1:
-    left, right = st.columns([1.35, 1])
+    render_section_header("Přehled investic", "Souhrn pozic a práce s cenami pro vybraný plán.")
 
-    with left:
-        st.markdown("### Vývoj portfolia")
-        render_snapshot_chart(selected_plan_id)
-
-        st.markdown("### Přehled investic")
-        if summary["positions"].empty:
-            st.info("Zatím nejsou žádné investice.")
-        else:
-            show = summary["positions"].copy()
-            for col in [
-                "quantity", "avg_buy_price", "invested_amount", "current_price",
-                "current_value", "profit_loss", "profit_loss_pct", "allocation_pct"
-            ]:
-                show[col] = show[col].round(2 if col != "quantity" else 6)
-            st.dataframe(show, use_container_width=True, hide_index=True)
-
-    with right:
-        st.markdown("### Alokace portfolia")
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        render_allocations(summary["positions"])
+    if summary["positions"].empty:
+        st.info("Zatím nejsou žádné investice.")
+    else:
+        st.markdown('<div class="surface-card">', unsafe_allow_html=True)
+        show = summary["positions"].copy()
+        for col in [
+            "quantity", "avg_buy_price", "invested_amount", "current_price",
+            "current_value", "profit_loss", "profit_loss_pct", "allocation_pct"
+        ]:
+            show[col] = show[col].round(2 if col != "quantity" else 6)
+        st.dataframe(show, use_container_width=True, hide_index=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("### Ceny a denní snapshot")
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        if not YF_AVAILABLE:
-            st.warning("Pro automatické ceny nainstaluj: python -m pip install yfinance")
-        rc1, rc2 = st.columns(2)
-        with rc1:
-            if st.button("Aktualizovat ceny", use_container_width=True):
-                ok, err = refresh_auto_prices()
-                if ok:
-                    st.success(f"Aktualizováno {len(ok)} tickerů.")
-                for e in err:
-                    st.warning(e)
-                st.rerun()
-        with rc2:
-            if st.button("Uložit denní snapshot", use_container_width=True):
-                save_daily_snapshot(selected_plan_id)
-                st.success("Denní snapshot uložen.")
-                st.rerun()
+    st.markdown('<div class="soft-gap-lg"></div>', unsafe_allow_html=True)
+    render_section_header("Ceny a denní snapshot", "Automatické ceny, ruční cena a ukládání denního snapshotu.")
+    st.markdown('<div class="surface-card">', unsafe_allow_html=True)
 
-        plan_ticker = selected_plan.get("primary_ticker")
-        latest = prices[prices["ticker"] == plan_ticker]
-        if not latest.empty:
-            row = latest.iloc[0]
-            st.markdown(
-                f'<div class="muted">Poslední cena: <b>{fmt_czk(float(row["price"]))}</b> · {row["price_date"]} · {row["source"]}</div>',
-                unsafe_allow_html=True
-            )
-        else:
-            st.info("Zatím není uložená žádná cena.")
+    if not YF_AVAILABLE:
+        st.warning("Pro automatické ceny nainstaluj: python -m pip install yfinance")
 
-        with st.form("manual_price", clear_on_submit=True):
-            ticker = st.selectbox(
-                "Ticker",
-                assets["ticker"].tolist() if not assets.empty else [selected_plan["primary_ticker"]]
-            )
-            price = st.number_input("Ruční cena v CZK", min_value=0.0, value=0.0, step=1.0)
-            submit = st.form_submit_button("Uložit ruční cenu", use_container_width=True)
-            if submit and price > 0:
-                set_asset_price(ticker, price, source="manual")
-                st.success("Ruční cena uložena.")
-                st.rerun()
+    rc1, rc2 = st.columns(2)
+    with rc1:
+        if st.button("Aktualizovat ceny", key="refresh_prices_btn", use_container_width=True):
+            ok, err = refresh_auto_prices()
+            if ok:
+                st.success(f"Aktualizováno {len(ok)} tickerů.")
+            for e in err:
+                st.warning(e)
+            st.rerun()
+    with rc2:
+        if st.button("Uložit denní snapshot", key="save_snapshot_btn", use_container_width=True):
+            save_daily_snapshot(selected_plan_id)
+            st.success("Denní snapshot uložen.")
+            st.rerun()
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    plan_ticker = selected_plan.get("primary_ticker")
+    latest = prices[prices["ticker"] == plan_ticker]
+    st.markdown('<div class="soft-gap"></div>', unsafe_allow_html=True)
+
+    if not latest.empty:
+        row = latest.iloc[0]
+        st.markdown(
+            f"""
+            <div class="info-card">
+                <span class="muted">Poslední cena:</span>
+                <strong>{fmt_czk(float(row["price"]))}</strong>
+                <span class="muted">· {row["price_date"]} · {row["source"]}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.info("Zatím není uložená žádná cena.")
+
+    with st.form("manual_price", clear_on_submit=True):
+        ticker = st.selectbox(
+            "Ticker",
+            assets["ticker"].tolist() if not assets.empty else [selected_plan["primary_ticker"]]
+        )
+        price = st.number_input("Ruční cena v CZK", min_value=0.0, value=0.0, step=1.0)
+        submit = st.form_submit_button("Uložit ruční cenu", use_container_width=True)
+        if submit and price > 0:
+            set_asset_price(ticker, price, source="manual")
+            st.success("Ruční cena uložena.")
+            st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab2:
-    st.markdown("### Aktiva v plánu")
+    render_section_header("Aktiva v plánu", "Více cards, méně tabulkový pocit, detail zachovaný.")
 
     if assets_overview.empty:
         st.info("V tomto plánu zatím nejsou žádná aktiva.")
     else:
-        left, right = st.columns([1.2, 1])
+        overview = normalize_overview_numeric_columns(assets_overview)
 
-        with left:
-            overview = assets_overview.copy()
-            for col in [
-                "quantity", "avg_buy_price", "invested_amount",
-                "current_price", "current_value", "profit_loss",
-                "profit_loss_pct", "allocation_pct"
-            ]:
-                overview[col] = overview[col].round(2 if col != "quantity" else 6)
+        asset_cards_cols = st.columns(2)
+        for idx, (_, row) in enumerate(overview.iterrows()):
+            col = asset_cards_cols[idx % 2]
+            with col:
+                title = f"{row['asset_name']} ({row['ticker']})"
+                subtitle = (
+                    f"Množství: {float(row['quantity']):.6f}".rstrip("0").rstrip(".")
+                    + f" · Alokace: {float(row['allocation_pct']):.2f}%"
+                )
+                value = fmt_czk(float(row["current_value"]))
+                pnl_text = f"{float(row['profit_loss_pct']):+.2f}%"
+                render_asset_card(
+                    title=title,
+                    subtitle=subtitle,
+                    value=value,
+                    pnl_text=pnl_text,
+                    pnl_positive=float(row["profit_loss"]) >= 0,
+                    selected=st.session_state.selected_asset_ticker == row["ticker"],
+                )
+                if st.button(
+                    f"Detail {row['ticker']}",
+                    key=f"asset_btn_{row['ticker']}",
+                    use_container_width=True
+                ):
+                    st.session_state.selected_asset_ticker = row["ticker"]
+                    st.rerun()
 
-            st.dataframe(
-                overview[[
-                    "asset_name", "ticker", "quantity", "current_price",
-                    "current_value", "profit_loss", "profit_loss_pct", "allocation_pct"
-                ]],
-                use_container_width=True,
-                hide_index=True
-            )
+        st.markdown('<div class="soft-gap-lg"></div>', unsafe_allow_html=True)
 
-            chosen = st.selectbox(
-                "Vyber aktivum",
-                options=assets_overview["ticker"].tolist(),
-                index=assets_overview["ticker"].tolist().index(st.session_state.selected_asset_ticker)
-                if st.session_state.selected_asset_ticker in assets_overview["ticker"].tolist()
-                else 0,
-                format_func=lambda x: f"{x} — {assets_overview.loc[assets_overview['ticker'] == x, 'asset_name'].iloc[0]}"
-            )
-            st.session_state.selected_asset_ticker = chosen
+        st.markdown('<div class="asset-select-card">', unsafe_allow_html=True)
+        st.markdown("### Vybrané aktivum")
+        chosen = st.selectbox(
+            "Přepnout detail aktiva",
+            options=overview["ticker"].tolist(),
+            index=overview["ticker"].tolist().index(st.session_state.selected_asset_ticker)
+            if st.session_state.selected_asset_ticker in overview["ticker"].tolist()
+            else 0,
+            format_func=lambda x: f"{x} — {overview.loc[overview['ticker'] == x, 'asset_name'].iloc[0]}"
+        )
+        st.session_state.selected_asset_ticker = chosen
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with right:
-            asset_detail = compute_asset_summary(selected_plan_id, st.session_state.selected_asset_ticker)
+        asset_detail = compute_asset_summary(selected_plan_id, st.session_state.selected_asset_ticker)
 
-            if not asset_detail:
-                st.info("Detail aktiva není k dispozici.")
+        if not asset_detail:
+            st.info("Detail aktiva není k dispozici.")
+        else:
+            st.markdown('<div class="surface-card">', unsafe_allow_html=True)
+            st.markdown(f"### {asset_detail['asset_name']}")
+            st.caption(f"Ticker: {asset_detail['ticker']}")
+
+            a1, a2, a3, a4 = st.columns(4)
+            with a1:
+                render_mini("Aktuální hodnota", fmt_czk(asset_detail["current_value"]))
+            with a2:
+                render_mini(
+                    "Zisk / ztráta",
+                    fmt_czk(asset_detail["profit_loss"]),
+                    f"{asset_detail['profit_loss_pct']:+.2f} %",
+                    asset_detail["profit_loss"] >= 0
+                )
+            with a3:
+                render_mini(
+                    "Množství",
+                    f"{asset_detail['quantity']:.6f}".rstrip("0").rstrip(".")
+                )
+            with a4:
+                render_mini("Alokace", f"{asset_detail['allocation_pct']:.2f} %")
+
+            b1, b2, b3, b4 = st.columns(4)
+            with b1:
+                render_mini("Průměrná nákupní cena", fmt_czk(asset_detail["avg_buy_price"]))
+            with b2:
+                render_mini("Aktuální cena", fmt_czk(asset_detail["current_price"]))
+            with b3:
+                render_mini("Počet nákupů", str(asset_detail["buy_count"]))
+            with b4:
+                render_mini("Počet prodejů", str(asset_detail["sell_count"]))
+
+            if asset_detail["latest_price_date"]:
+                st.caption(
+                    f"Poslední cena: {asset_detail['latest_price_date']} · {asset_detail['latest_price_source']}"
+                )
+
+            tx_df = asset_detail["transactions"].copy()
+            st.markdown('<div class="soft-gap"></div>', unsafe_allow_html=True)
+
+            if tx_df.empty:
+                st.info("Pro toto aktivum zatím nejsou transakce.")
             else:
-                st.markdown(f"### {asset_detail['asset_name']}")
-                st.caption(f"Ticker: {asset_detail['ticker']}")
-
-                a1, a2 = st.columns(2)
-                with a1:
-                    render_mini("Aktuální hodnota", fmt_czk(asset_detail["current_value"]))
-                with a2:
-                    render_mini(
-                        "Zisk / ztráta",
-                        fmt_czk(asset_detail["profit_loss"]),
-                        f"{asset_detail['profit_loss_pct']:+.2f} %",
-                        asset_detail["profit_loss"] >= 0
-                    )
-
-                b1, b2 = st.columns(2)
-                with b1:
-                    render_mini("Množství", f"{asset_detail['quantity']:.6f}".rstrip("0").rstrip("."))
-                with b2:
-                    render_mini("Alokace", f"{asset_detail['allocation_pct']:.2f} %")
-
-                c1, c2 = st.columns(2)
-                with c1:
-                    render_mini("Průměrná nákupní cena", fmt_czk(asset_detail["avg_buy_price"]))
-                with c2:
-                    render_mini("Aktuální cena", fmt_czk(asset_detail["current_price"]))
-
-                d1, d2 = st.columns(2)
-                with d1:
-                    render_mini("Počet nákupů", str(asset_detail["buy_count"]))
-                with d2:
-                    render_mini("Počet prodejů", str(asset_detail["sell_count"]))
-
-                if asset_detail["latest_price_date"]:
-                    st.caption(
-                        f"Poslední cena: {asset_detail['latest_price_date']} · {asset_detail['latest_price_source']}"
-                    )
-
-                st.markdown("### Transakce aktiva")
-                tx_df = asset_detail["transactions"].copy()
-
-                if tx_df.empty:
-                    st.info("Pro toto aktivum zatím nejsou transakce.")
-                else:
+                render_section_header("Transakce aktiva", "Detail historie zůstává zachovaný.")
+                with st.expander("Zobrazit tabulku transakcí", expanded=True):
                     show_tx = tx_df.copy()
                     for col in ["quantity", "price_per_unit", "fee", "total_value"]:
                         if col in show_tx.columns:
-                            show_tx[col] = show_tx[col].round(2)
+                            show_tx[col] = pd.to_numeric(show_tx[col], errors="coerce").round(2)
                     st.dataframe(show_tx, use_container_width=True, hide_index=True)
 
+            with st.expander("Zobrazit kompletní přehled všech aktiv"):
+                table_df = overview.copy()
+                for col in [
+                    "quantity", "avg_buy_price", "invested_amount",
+                    "current_price", "current_value", "profit_loss",
+                    "profit_loss_pct", "allocation_pct"
+                ]:
+                    if col in table_df.columns:
+                        table_df[col] = table_df[col].round(2 if col != "quantity" else 6)
+                st.dataframe(
+                    table_df[[
+                        "asset_name", "ticker", "quantity", "current_price",
+                        "current_value", "profit_loss", "profit_loss_pct", "allocation_pct"
+                    ]],
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
 with tab3:
+    render_section_header("Budoucí nákupy", "Plánované nákupy a přidání nové položky.")
     col1, col2 = st.columns([1.5, 1])
+
     with col1:
+        st.markdown('<div class="surface-card">', unsafe_allow_html=True)
         st.markdown("### Plánované nákupy")
         if planned.empty:
             st.info("Žádné plánované nákupy.")
         else:
             st.dataframe(planned, use_container_width=True, hide_index=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
     with col2:
+        st.markdown('<div class="surface-card">', unsafe_allow_html=True)
         st.markdown("### Přidat plánovaný nákup")
         choices = assets["ticker"].tolist() if not assets.empty else [selected_plan["primary_ticker"]]
         with st.form("planned_buy", clear_on_submit=True):
@@ -1131,20 +1497,38 @@ with tab3:
                 add_planned_order(selected_plan_id, ticker, str(pdate), amount, note, 1)
                 st.success("Plánovaný nákup uložen.")
                 st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 with tab4:
+    render_section_header("Transakce", "Cash pohyby a investiční transakce vybraného plánu.")
     tc1, tc2 = st.columns(2)
+
     with tc1:
+        st.markdown('<div class="surface-card">', unsafe_allow_html=True)
         st.markdown("### Cash transakce")
-        st.dataframe(cash, use_container_width=True, hide_index=True) if not cash.empty else st.info("Žádné cash transakce.")
+        if not cash.empty:
+            st.dataframe(cash, use_container_width=True, hide_index=True)
+        else:
+            st.info("Žádné cash transakce.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
     with tc2:
+        st.markdown('<div class="surface-card">', unsafe_allow_html=True)
         st.markdown("### Investiční transakce")
-        st.dataframe(trades, use_container_width=True, hide_index=True) if not trades.empty else st.info("Žádné investiční transakce.")
+        if not trades.empty:
+            st.dataframe(trades, use_container_width=True, hide_index=True)
+        else:
+            st.info("Žádné investiční transakce.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 with tab5:
+    render_section_header("Import XTB", "Import reportu XTB pro Investment Plans i My Trades.")
+    st.markdown('<div class="surface-card">', unsafe_allow_html=True)
+
     st.markdown("### Import XTB reportu")
     uploaded = st.file_uploader("Nahraj XTB report (.xlsx)", type=["xlsx"])
     product_filter = st.selectbox("Produkt", ["Investment Plans", "My Trades"], index=0)
+
     if st.button("Importovat XTB", use_container_width=True, disabled=uploaded is None):
         try:
             a, b, c, d = import_xtb_report(uploaded, product_filter)
@@ -1153,12 +1537,69 @@ with tab5:
         except Exception as e:
             st.error(f"Import selhal: {e}")
 
+    st.markdown('<div class="soft-gap"></div>', unsafe_allow_html=True)
     st.markdown("### Historie importů")
     logs = get_import_logs()
-    st.dataframe(logs, use_container_width=True, hide_index=True) if not logs.empty else st.info("Zatím žádný import.")
+    if not logs.empty:
+        st.dataframe(logs, use_container_width=True, hide_index=True)
+    else:
+        st.info("Zatím žádný import.")
 
-st.markdown("---")
-st.subheader("Akcie (My Trades)")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="soft-gap-lg"></div>', unsafe_allow_html=True)
+render_section_header("Akcie (My Trades)", "Souhrn otevřených stock pozic importovaných z XTB nebo zadaných ručně.")
+
+st.markdown('<div class="surface-card">', unsafe_allow_html=True)
+st.markdown("### Přidat nakoupenou akcii ručně")
+
+with st.form("manual_my_trade_buy_form", clear_on_submit=True):
+    mt1, mt2 = st.columns(2)
+    with mt1:
+        manual_ticker = st.text_input("Ticker", placeholder="např. AAPL nebo AAPL.US")
+        manual_name = st.text_input("Název akcie", placeholder="např. Apple")
+        manual_date = st.date_input("Datum nákupu", value=date.today(), key="manual_my_trade_date")
+    with mt2:
+        manual_quantity = st.number_input("Počet kusů", min_value=0.0, value=0.0, step=1.0)
+        manual_price = st.number_input("Cena za kus", min_value=0.0, value=0.0, step=0.01)
+        manual_currency = st.selectbox("Měna", ["USD", "EUR", "CZK"], index=0)
+
+    manual_submit = st.form_submit_button("Uložit nákup do My Trades", use_container_width=True)
+
+    if manual_submit:
+        if not manual_ticker.strip():
+            st.error("Zadej ticker.")
+        elif manual_quantity <= 0:
+            st.error("Počet kusů musí být větší než 0.")
+        elif manual_price <= 0:
+            st.error("Cena za kus musí být větší než 0.")
+        else:
+            try:
+                result = add_manual_my_trade_buy(
+                    ticker=manual_ticker,
+                    instrument_name=manual_name or manual_ticker,
+                    trade_date=str(manual_date),
+                    quantity=float(manual_quantity),
+                    price_per_share=float(manual_price),
+                    currency=manual_currency,
+                )
+                imported = int(result.get("imported", 0))
+                skipped = int(result.get("skipped", 0))
+
+                if imported > 0:
+                    st.success(f"Nákup akcie {manual_ticker.upper()} byl uložen do My Trades.")
+                elif skipped > 0:
+                    st.warning("Tento záznam byl pravděpodobně vyhodnocen jako duplicita.")
+                else:
+                    st.info("Záznam byl zpracován bez změny.")
+
+                st.rerun()
+            except Exception as e:
+                st.error(f"Ruční vložení nákupu selhalo: {e}")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="soft-gap-lg"></div>', unsafe_allow_html=True)
 
 stock_summary = get_stock_portfolio_summary()
 
@@ -1174,7 +1615,7 @@ with sc4:
     render_mini(
         "Nerealizovaný P/L",
         fmt_czk(stock_pnl),
-        None,
+        format_signed_czk(stock_pnl),
         stock_pnl >= 0
     )
 
@@ -1212,6 +1653,7 @@ else:
         if col in display_df.columns:
             display_df[col] = pd.to_numeric(display_df[col], errors="coerce").round(4)
 
+    st.markdown('<div class="surface-card">', unsafe_allow_html=True)
     st.markdown("### Otevřené pozice")
     st.dataframe(
         display_df[[
@@ -1246,5 +1688,63 @@ else:
                     stock_tx_df[col] = pd.to_numeric(stock_tx_df[col], errors="coerce").round(4)
 
             st.dataframe(stock_tx_df, use_container_width=True, hide_index=True)
+
+            st.markdown('<div class="soft-gap"></div>', unsafe_allow_html=True)
+            st.markdown("#### Smazat chybně zadaný ruční nákup")
+
+            manual_tx_df = stock_tx_df.copy()
+            if "source" in manual_tx_df.columns:
+                manual_tx_df["source_norm"] = manual_tx_df["source"].astype(str).str.strip().str.lower()
+                manual_tx_df = manual_tx_df[manual_tx_df["source_norm"] == "manual"].copy()
+            else:
+                manual_tx_df = pd.DataFrame()
+
+            if manual_tx_df.empty:
+                st.info("Nejsou k dispozici žádné ručně zadané stock transakce ke smazání.")
+            else:
+                manual_tx_df = manual_tx_df.sort_values(["trade_date", "id"], ascending=[False, False])
+
+                def _format_manual_tx_label(row):
+                    tx_id = int(row.get("id"))
+                    ticker = str(row.get("ticker", "")).strip()
+                    tx_type = str(row.get("transaction_type", "")).strip().upper()
+                    trade_date = str(row.get("trade_date", ""))
+                    quantity = pd.to_numeric(row.get("quantity"), errors="coerce")
+                    price = pd.to_numeric(row.get("price_per_share"), errors="coerce")
+                    currency = str(row.get("currency", "")).strip().upper()
+                    qty_txt = f"{float(quantity):,.4f}".replace(",", " ") if pd.notna(quantity) else "0"
+                    price_txt = f"{float(price):,.4f}".replace(",", " ") if pd.notna(price) else "0"
+                    return f"ID {tx_id} · {trade_date} · {ticker} · {tx_type} · {qty_txt} ks · {price_txt} {currency}"
+
+                manual_tx_options = {
+                    _format_manual_tx_label(row): int(row["id"])
+                    for _, row in manual_tx_df.iterrows()
+                }
+
+                selected_manual_tx_label = st.selectbox(
+                    "Vyber ruční stock transakci ke smazání",
+                    options=list(manual_tx_options.keys()),
+                    key="delete_manual_stock_tx_select",
+                )
+                selected_manual_tx_id = manual_tx_options[selected_manual_tx_label]
+
+                confirm_delete_manual_tx = st.checkbox(
+                    "Potvrzuji smazání vybrané ruční transakce",
+                    key="confirm_delete_manual_stock_tx",
+                )
+
+                if st.button(
+                    "Smazat vybraný ruční nákup",
+                    use_container_width=True,
+                    key="delete_manual_stock_tx_button",
+                    disabled=not confirm_delete_manual_tx,
+                ):
+                    delete_result = delete_manual_stock_transaction(selected_manual_tx_id)
+                    if delete_result.get("deleted"):
+                        st.success(delete_result.get("message", "Ruční stock transakce byla smazána."))
+                        st.rerun()
+                    else:
+                        st.error(delete_result.get("message", "Transakci se nepodařilo smazat."))
         else:
             st.info("Zatím nejsou evidované žádné stock transakce.")
+    st.markdown('</div>', unsafe_allow_html=True)
