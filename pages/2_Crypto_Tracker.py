@@ -18,6 +18,7 @@ DATA_FILE = "transactions.csv"
 TRACKED_COINS = ["bitcoin", "ethereum", "solana", "polkadot"]
 MAIN_COINS = {"bitcoin", "ethereum", "solana"}
 DOT_COIN = "polkadot"
+LAST_KNOWN_PRICES = {}
 
 
 # =========================================================
@@ -549,6 +550,12 @@ def summarize_portfolio_group(portfolio: dict, include_coins: set[str]) -> dict:
         invested_usd += cost_usd
 
         price_now = get_crypto_price(coin_name)
+
+        if price_now is not None:
+            LAST_KNOWN_PRICES[coin_name] = price_now
+        else:
+            price_now = LAST_KNOWN_PRICES.get(coin_name)
+
         if price_now is None:
             has_missing_price = True
             continue
@@ -601,6 +608,11 @@ for coin_name, data in portfolio.items():
         continue
 
     price_now = get_crypto_price(coin_name)
+
+    if price_now is not None:
+        LAST_KNOWN_PRICES[coin_name] = price_now
+    else:
+        price_now = LAST_KNOWN_PRICES.get(coin_name)
 
     if price_now is None:
         value_usd = None
