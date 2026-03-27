@@ -1,3 +1,4 @@
+import json
 import time
 from datetime import datetime
 from io import BytesIO
@@ -15,10 +16,55 @@ except Exception:
 
 
 DATA_FILE = "transactions.csv"
+PRICE_CACHE_FILE = "crypto_price_cache.json"
 TRACKED_COINS = ["bitcoin", "ethereum", "solana", "polkadot"]
 MAIN_COINS = {"bitcoin", "ethereum", "solana"}
 DOT_COIN = "polkadot"
 LAST_KNOWN_PRICES = {}
+
+
+
+def load_price_cache() -> dict:
+    try:
+        with open(PRICE_CACHE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            clean = {}
+            for key, value in data.items():
+                try:
+                    clean[normalize_coin(str(key))] = float(value)
+                except Exception:
+                    continue
+            return clean
+    except Exception:
+        pass
+    return {}
+
+
+def save_price_cache(cache: dict) -> None:
+    try:
+        with open(PRICE_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def resolve_price_with_fallback(coin_name: str, amount_now: float = 0.0, cost_usd: float = 0.0):
+    price_now = get_crypto_price(coin_name)
+
+    if price_now is not None:
+        LAST_KNOWN_PRICES[coin_name] = float(price_now)
+        save_price_cache(LAST_KNOWN_PRICES)
+        return float(price_now)
+
+    cached_price = LAST_KNOWN_PRICES.get(coin_name)
+    if cached_price is not None:
+        return float(cached_price)
+
+    if amount_now > 0 and cost_usd > 0:
+        return float(cost_usd / amount_now)
+
+    return None
 
 
 # =========================================================
@@ -244,6 +290,7 @@ def inject_css():
 
 
 inject_css()
+LAST_KNOWN_PRICES.update(load_price_cache())
 
 
 # =========================================================
@@ -549,12 +596,11 @@ def summarize_portfolio_group(portfolio: dict, include_coins: set[str]) -> dict:
         has_any = True
         invested_usd += cost_usd
 
-        price_now = get_crypto_price(coin_name)
-
-        if price_now is not None:
-            LAST_KNOWN_PRICES[coin_name] = price_now
-        else:
-            price_now = LAST_KNOWN_PRICES.get(coin_name)
+        price_now = resolve_price_with_fallback(
+            coin_name=coin_name,
+            amount_now=amount_now,
+            cost_usd=cost_usd,
+        )
 
         if price_now is None:
             has_missing_price = True
@@ -607,12 +653,11 @@ for coin_name, data in portfolio.items():
     if amount_now <= 0:
         continue
 
-    price_now = get_crypto_price(coin_name)
-
-    if price_now is not None:
-        LAST_KNOWN_PRICES[coin_name] = price_now
-    else:
-        price_now = LAST_KNOWN_PRICES.get(coin_name)
+    price_now = resolve_price_with_fallback(
+        coin_name=coin_name,
+        amount_now=amount_now,
+        cost_usd=cost_usd,
+    )
 
     if price_now is None:
         value_usd = None
