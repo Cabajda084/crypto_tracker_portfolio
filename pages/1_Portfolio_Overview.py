@@ -29,6 +29,10 @@ except Exception:
 DATA_FILE = "transactions.csv"
 TRACKED_COINS = ["bitcoin", "ethereum", "solana", "polkadot"]
 
+# Poslední známé ceny v rámci běžící app session / procesu.
+# Když externí API krátce selže, portfolio nespadne na 0.
+LAST_KNOWN_PRICES = {}
+
 
 def inject_css():
     st.markdown(
@@ -320,6 +324,8 @@ def normalize_coin(coin: str) -> str:
         "ethereum": "ethereum",
         "sol": "solana",
         "solana": "solana",
+        "dot": "polkadot",
+        "polkadot": "polkadot",
     }
     return mapping.get(c, c)
 
@@ -329,6 +335,7 @@ def pretty_coin_name(coin: str) -> str:
         "bitcoin": "Bitcoin",
         "ethereum": "Ethereum",
         "solana": "Solana",
+        "polkadot": "Polkadot",
     }
     return mapping.get(coin, coin.title())
 
@@ -338,6 +345,7 @@ def pretty_coin_ticker(coin: str) -> str:
         "bitcoin": "BTC",
         "ethereum": "ETH",
         "solana": "SOL",
+        "polkadot": "DOT",
     }
     return mapping.get(coin, coin.upper())
 
@@ -382,6 +390,7 @@ def get_crypto_price(coin: str):
             "bitcoin": "BTCUSDT",
             "ethereum": "ETHUSDT",
             "solana": "SOLUSDT",
+            "polkadot": "DOTUSDT",
         }
 
         symbol = symbol_map.get(coin_id)
@@ -484,6 +493,12 @@ def get_coin_metrics(portfolio: dict, usdczk: float):
 
         price_now = get_crypto_price(coin)
 
+        # Stabilní fallback: pokud live API selže, použij poslední známou cenu
+        if price_now is not None:
+            LAST_KNOWN_PRICES[coin] = price_now
+        else:
+            price_now = LAST_KNOWN_PRICES.get(coin)
+
         if amount > 0 and price_now is not None:
             value_usd = amount * price_now
             pnl_usd = value_usd - cost_usd
@@ -557,7 +572,10 @@ def format_amount(value):
 inject_css()
 
 st.title("Portfolio Overview")
-st.markdown('<div class="app-subtitle">Celkový přehled portfolia napříč Crypto, Invest, My Trades a Investown.</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="app-subtitle">Celkový přehled portfolia napříč Crypto, Invest, My Trades a Investown.</div>',
+    unsafe_allow_html=True,
+)
 
 # =========================================================
 # CRYPTO SUMMARY
