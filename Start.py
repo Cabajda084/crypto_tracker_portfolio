@@ -12,3 +12,5 @@ st.markdown("Vyber sekci v levém menu.")
 st.divider()
 
 st.info("Aplikace byla úspěšně aktualizována.")
+
+st.caption("VERZE TEST 27-03 RANO")

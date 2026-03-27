@@ -27,7 +27,7 @@ except Exception:
 
 
 DATA_FILE = "transactions.csv"
-TRACKED_COINS = ["bitcoin", "ethereum", "solana"]
+TRACKED_COINS = ["bitcoin", "ethereum", "solana", "polkadot"]
 
 
 def inject_css():
