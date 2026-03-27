@@ -29,29 +29,32 @@ st.markdown(
     }
 
     .block-container {
-        max-width: 520px;
-        padding-top: 1.2rem !important;
-        padding-bottom: 2rem !important;
+        max-width: 560px;
+        padding-top: 0.9rem !important;
+        padding-bottom: 1.6rem !important;
         padding-left: 0.9rem !important;
         padding-right: 0.9rem !important;
     }
 
-    .top-gradient {
-        height: 180px;
-        border-radius: 30px;
-        background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
-        box-shadow: 0 20px 45px rgba(67, 56, 202, 0.22);
-        margin-bottom: -70px;
+    .top-space {
+        height: 10px;
     }
 
-    .glass-card {
-        position: relative;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid #e5e7eb;
+    .hero-gradient {
+        height: 170px;
         border-radius: 28px;
-        padding: 1.35rem 1.1rem 1.15rem 1.1rem;
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
-        backdrop-filter: blur(12px);
+        background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
+        box-shadow: 0 18px 42px rgba(67, 56, 202, 0.22);
+        margin-bottom: -64px;
+    }
+
+    .hero-card {
+        position: relative;
+        background: rgba(255, 255, 255, 0.97);
+        border: 1px solid #e5e7eb;
+        border-radius: 26px;
+        padding: 1.25rem 1.05rem 1rem 1.05rem;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);
         margin-bottom: 1rem;
     }
 
@@ -63,20 +66,20 @@ st.markdown(
         padding: 6px 12px;
         font-size: 0.78rem;
         font-weight: 700;
-        margin-bottom: 0.9rem;
+        margin-bottom: 0.85rem;
     }
 
     .hero-title {
-        font-size: 2.2rem;
-        line-height: 1.02;
+        font-size: 2rem;
         font-weight: 800;
-        color: #111827;
-        margin-bottom: 0.7rem;
+        line-height: 1.05;
         letter-spacing: -0.02em;
+        color: #111827;
+        margin-bottom: 0.65rem;
     }
 
     .hero-subtitle {
-        font-size: 1rem;
+        font-size: 0.98rem;
         line-height: 1.55;
         color: #6b7280;
         margin-bottom: 0;
@@ -88,11 +91,11 @@ st.markdown(
         border-radius: 22px;
         padding: 1rem;
         box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-        margin-bottom: 1rem;
+        margin-bottom: 0.9rem;
     }
 
     .section-title {
-        font-size: 1.08rem;
+        font-size: 1.06rem;
         font-weight: 800;
         color: #111827;
         margin-bottom: 0.35rem;
@@ -100,7 +103,7 @@ st.markdown(
 
     .section-subtitle {
         color: #6b7280;
-        font-size: 0.95rem;
+        font-size: 0.94rem;
         line-height: 1.5;
         margin-bottom: 0;
     }
@@ -109,24 +112,24 @@ st.markdown(
         background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
         border: 1px solid #fed7aa;
         border-radius: 18px;
-        padding: 0.95rem 1rem;
+        padding: 0.9rem 1rem;
         color: #9a3412;
-        font-size: 0.92rem;
+        font-size: 0.91rem;
         line-height: 1.45;
         font-weight: 600;
-        margin-top: 0.75rem;
+        margin-top: 0.85rem;
     }
 
     .info-note {
         background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
         border: 1px solid #c7d2fe;
         border-radius: 18px;
-        padding: 0.95rem 1rem;
+        padding: 0.9rem 1rem;
         color: #3730a3;
-        font-size: 0.92rem;
+        font-size: 0.91rem;
         line-height: 1.45;
         font-weight: 600;
-        margin-top: 0.8rem;
+        margin-top: 0.85rem;
     }
 
     .version-note {
@@ -137,8 +140,8 @@ st.markdown(
     }
 
     div[data-testid="stTextInput"] {
-        margin-top: 0.2rem;
-        margin-bottom: 0.85rem;
+        margin-top: 0.15rem;
+        margin-bottom: 0.8rem;
     }
 
     div[data-testid="stTextInput"] input {
@@ -152,52 +155,52 @@ st.markdown(
 
     div[data-testid="stButton"] > button {
         width: 100%;
-        min-height: 54px;
-        border-radius: 18px;
-        font-weight: 800;
+        min-height: 56px;
+        border-radius: 22px;
+        font-weight: 700;
         font-size: 1rem;
         border: none;
         background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
         color: white;
-        box-shadow: 0 10px 24px rgba(99, 102, 241, 0.24);
+        box-shadow: 0 6px 16px rgba(99, 102, 241, 0.20);
     }
 
     div[data-testid="stButton"] > button:hover {
         filter: brightness(1.03);
     }
 
-    .logout-row div[data-testid="stButton"] > button {
+    .logout-wrap div[data-testid="stButton"] > button {
         min-height: 42px;
         border-radius: 14px;
         background: #ffffff;
         color: #111827;
         border: 1px solid #e5e7eb;
         box-shadow: none;
-        font-size: 0.92rem;
+        font-size: 0.9rem;
     }
 
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
-            padding-top: 0.85rem !important;
+            padding-top: 0.75rem !important;
+            padding-bottom: 1.15rem !important;
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
-            padding-bottom: 1.2rem !important;
         }
 
-        .top-gradient {
-            height: 210px;
-            border-radius: 28px;
-            margin-bottom: -82px;
+        .hero-gradient {
+            height: 190px;
+            border-radius: 26px;
+            margin-bottom: -72px;
         }
 
-        .glass-card {
+        .hero-card {
             border-radius: 24px;
-            padding: 1.1rem 0.95rem 1rem 0.95rem;
+            padding: 1.1rem 0.95rem 0.95rem 0.95rem;
         }
 
         .hero-title {
-            font-size: 2rem;
+            font-size: 1.85rem;
         }
 
         .hero-subtitle {
@@ -206,6 +209,7 @@ st.markdown(
 
         .section-card {
             border-radius: 20px;
+            padding: 0.95rem;
         }
     }
     </style>
@@ -217,11 +221,12 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 
-def render_welcome_header(title: str, subtitle: str, badge: str):
-    st.markdown('<div class="top-gradient"></div>', unsafe_allow_html=True)
+def render_header(badge: str, title: str, subtitle: str):
+    st.markdown('<div class="top-space"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-gradient"></div>', unsafe_allow_html=True)
     st.markdown(
         f"""
-        <div class="glass-card">
+        <div class="hero-card">
             <div class="hero-badge">{badge}</div>
             <div class="hero-title">{title}</div>
             <div class="hero-subtitle">{subtitle}</div>
@@ -232,19 +237,20 @@ def render_welcome_header(title: str, subtitle: str, badge: str):
 
 
 if not st.session_state.authenticated:
-    st.markdown("<br>", unsafe_allow_html=True)
-    render_welcome_header(
-        "Vítej zpět",
-        "Bezpečný vstup do přehledu investic, krypta a portfolia. Vše důležité přehledně na jednom místě.",
+    render_header(
         "MY PORTFOLIO",
+        "Vítej zpět",
+        "Bezpečný vstup do přehledu investic, krypta a portfolia. Pro pokračování zadej svůj PIN kód.",
     )
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown(
         """
         <div class="section-card">
             <div class="section-title">Přihlášení pomocí PIN</div>
             <div class="section-subtitle">
-                Aplikace obsahuje citlivé finanční údaje. Pro pokračování zadej svůj PIN.
+                Aplikace obsahuje citlivé finanční údaje a je chráněná soukromým přístupem.
             </div>
         </div>
         """,
@@ -268,7 +274,7 @@ if not st.session_state.authenticated:
     st.markdown(
         """
         <div class="security-note">
-            Po dokončení práce se můžeš kdykoliv odhlásit a aplikaci znovu zamknout.
+            Po dokončení práce doporučujeme aplikaci znovu zamknout kvůli ochraně citlivých údajů.
         </div>
         """,
         unsafe_allow_html=True,
@@ -281,26 +287,28 @@ if not st.session_state.authenticated:
 
     st.stop()
 
-left, right = st.columns([3, 1])
+left, right = st.columns([4, 1])
 with right:
-    st.markdown('<div class="logout-row">', unsafe_allow_html=True)
+    st.markdown('<div class="logout-wrap">', unsafe_allow_html=True)
     if st.button("Odhlásit se"):
         st.session_state.authenticated = False
         st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-render_welcome_header(
-    "My Portfolio",
-    "Vyber sekci, do které chceš vstoupit. Rozcestník je navržený pro mobil, čistý vzhled a rychlý přístup.",
+render_header(
     "DASHBOARD",
+    "My Portfolio",
+    "Vyber sekci, do které chceš vstoupit. Rozcestník je navržený pro rychlý a přehledný mobilní přístup.",
 )
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 st.markdown(
     """
     <div class="section-card">
         <div class="section-title">Hlavní sekce</div>
         <div class="section-subtitle">
-            Portfolio overview, crypto tracker, invest tracker a Investown tracker.
+            Otevři Portfolio Overview, Crypto Tracker, Invest Tracker nebo Investown Tracker.
         </div>
     </div>
     """,
