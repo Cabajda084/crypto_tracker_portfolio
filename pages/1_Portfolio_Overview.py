@@ -38,17 +38,62 @@ def inject_css():
     st.markdown(
         """
         <style>
-        .block-container {
-            max-width: 1380px;
-            padding-top: 1.2rem;
-            padding-bottom: 2rem;
+        [data-testid="stHeader"] {
+            display: none;
         }
 
-        .app-subtitle {
-            color: #6b7280;
+        [data-testid="stToolbar"] {
+            display: none;
+        }
+
+        #MainMenu {
+            visibility: hidden;
+        }
+
+        footer {
+            visibility: hidden;
+        }
+
+        .block-container {
+            max-width: 1280px;
+            padding-top: 0.9rem;
+            padding-bottom: 6rem;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
+        }
+
+        .page-hero {
+            background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
+            border-radius: 28px;
+            padding: 24px 22px;
+            color: white;
+            box-shadow: 0 16px 40px rgba(67, 56, 202, 0.18);
+            margin-bottom: 1rem;
+        }
+
+        .page-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: white;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+        }
+
+        .page-title {
+            font-size: 2.1rem;
+            line-height: 1.02;
+            font-weight: 800;
+            margin-bottom: 0.45rem;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.92);
             font-size: 0.98rem;
-            margin-top: -0.35rem;
-            margin-bottom: 1.1rem;
+            line-height: 1.5;
         }
 
         .hero-card,
@@ -62,22 +107,22 @@ def inject_css():
         }
 
         .hero-card {
-            padding: 26px 28px;
+            padding: 24px 24px;
             margin-bottom: 1rem;
             background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
         }
 
         .hero-label {
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.45rem;
             font-weight: 700;
         }
 
         .hero-value {
-            font-size: 3rem;
+            font-size: 2.7rem;
             line-height: 1.05;
             font-weight: 800;
             color: #111827;
@@ -87,41 +132,42 @@ def inject_css():
         .hero-subrow {
             display: flex;
             flex-wrap: wrap;
-            gap: 14px;
+            gap: 12px;
             align-items: center;
             color: #6b7280;
-            font-size: 0.98rem;
+            font-size: 0.96rem;
         }
 
         .summary-card {
-            padding: 18px 20px;
+            padding: 18px 18px;
             height: 100%;
             margin-bottom: 0.8rem;
         }
 
         .summary-label {
             color: #6b7280;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             margin-bottom: 0.45rem;
             font-weight: 600;
         }
 
         .summary-value {
             color: #111827;
-            font-size: 1.9rem;
-            line-height: 1.1;
+            font-size: 1.75rem;
+            line-height: 1.08;
             font-weight: 800;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.3rem;
         }
 
         .summary-meta {
             color: #6b7280;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
 
         .tracker-card {
-            padding: 22px 22px 18px 22px;
-            margin-top: 0.4rem;
+            padding: 20px 20px 16px 20px;
+            margin-top: 0.35rem;
             margin-bottom: 1rem;
         }
 
@@ -134,24 +180,25 @@ def inject_css():
         }
 
         .tracker-title {
-            font-size: 1.2rem;
+            font-size: 1.16rem;
             font-weight: 800;
             color: #111827;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.16rem;
         }
 
         .tracker-desc {
             color: #6b7280;
-            font-size: 0.94rem;
+            font-size: 0.93rem;
+            line-height: 1.45;
         }
 
         .section-spacer {
-            height: 0.35rem;
+            height: 0.2rem;
         }
 
         .asset-card {
-            padding: 16px 18px;
-            margin-bottom: 0.75rem;
+            padding: 15px 16px;
+            margin-bottom: 0.72rem;
             background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
         }
 
@@ -164,26 +211,27 @@ def inject_css():
 
         .asset-title {
             color: #111827;
-            font-size: 1.02rem;
+            font-size: 1rem;
             font-weight: 800;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.22rem;
         }
 
         .asset-sub {
             color: #6b7280;
-            font-size: 0.9rem;
+            font-size: 0.89rem;
+            line-height: 1.4;
         }
 
         .asset-value {
             color: #111827;
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 800;
             text-align: right;
-            line-height: 1.15;
+            line-height: 1.12;
         }
 
         .asset-pnl {
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             text-align: right;
             margin-top: 0.2rem;
         }
@@ -194,7 +242,7 @@ def inject_css():
             display: inline-block;
             padding: 0.22rem 0.55rem;
             border-radius: 999px;
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             font-weight: 700;
         }
 
@@ -214,17 +262,18 @@ def inject_css():
         }
 
         .small-gap {
-            height: 0.25rem;
+            height: 0.18rem;
         }
 
         @media (max-width: 768px) {
             .block-container {
-                padding-top: 0.8rem;
+                padding-top: 0.75rem;
                 padding-left: 0.8rem;
                 padding-right: 0.8rem;
-                padding-bottom: 1.25rem;
+                padding-bottom: 6.5rem;
             }
 
+            .page-hero,
             .hero-card,
             .summary-card,
             .tracker-card,
@@ -232,16 +281,29 @@ def inject_css():
                 border-radius: 20px;
             }
 
+            .page-hero {
+                padding: 18px 16px;
+                margin-bottom: 0.85rem;
+            }
+
+            .page-title {
+                font-size: 1.7rem;
+            }
+
+            .page-subtitle {
+                font-size: 0.94rem;
+            }
+
             .hero-card {
-                padding: 20px 18px;
+                padding: 18px 16px;
             }
 
             .hero-value {
-                font-size: 2.2rem;
+                font-size: 2.1rem;
             }
 
             .summary-value {
-                font-size: 1.6rem;
+                font-size: 1.45rem;
             }
 
             .tracker-header,
@@ -252,7 +314,7 @@ def inject_css():
             .asset-value,
             .asset-pnl {
                 text-align: left;
-                margin-top: 0.55rem;
+                margin-top: 0.5rem;
             }
         }
         </style>
@@ -571,9 +633,16 @@ def format_amount(value):
 
 inject_css()
 
-st.title("Portfolio Overview")
 st.markdown(
-    '<div class="app-subtitle">Celkový přehled portfolia napříč Crypto, Invest, My Trades a Investown.</div>',
+    """
+    <div class="page-hero">
+        <div class="page-badge">PŘEHLED</div>
+        <div class="page-title">Moje portfolio</div>
+        <div class="page-subtitle">
+            Celkový přehled portfolia napříč kryptem, XTB, My Trades a Investown.
+        </div>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
@@ -681,13 +750,13 @@ st.markdown(
 top1, top2, top3 = st.columns(3)
 with top1:
     render_summary_card(
-        "Crypto",
+        "Kryptoměny",
         fmt_czk(crypto_total_value_czk),
         f"Investováno {fmt_czk(crypto_total_cost_czk)} · P/L {fmt_czk(crypto_total_pnl_czk)} · {total_pnl_pct:+.2f}%",
     )
 with top2:
     render_summary_card(
-        "Invest",
+        "XTB + My Trades",
         fmt_czk(invest_total_value_czk),
         f"Plány + My Trades · Investováno {fmt_czk(invest_total_cost_czk)} · P/L {fmt_czk(invest_total_pnl_czk)} · {invest_total_pnl_pct:+.2f}%",
     )
@@ -722,8 +791,8 @@ with col1:
         """
         <div class="tracker-header">
             <div>
-                <div class="tracker-title">Crypto Tracker</div>
-                <div class="tracker-desc">Přehled kryptoměnového portfolia</div>
+                <div class="tracker-title">Kryptoměny</div>
+                <div class="tracker-desc">Přehled kryptoměnové části portfolia</div>
             </div>
         </div>
         """,
@@ -765,8 +834,8 @@ with col2:
         """
         <div class="tracker-header">
             <div>
-                <div class="tracker-title">Invest Tracker</div>
-                <div class="tracker-desc">Přehled investičních plánů a My Trades akcií</div>
+                <div class="tracker-title">XTB a My Trades</div>
+                <div class="tracker-desc">Přehled investičních plánů a akciových obchodů</div>
             </div>
         </div>
         """,
@@ -779,12 +848,12 @@ with col2:
     with i2:
         render_summary_card("Cash rezerva", fmt_czk(invest_cash_balance_czk), "Volná hotovost v plánech")
     with i3:
-        render_summary_card("Celkem Invest", fmt_czk(invest_total_value_czk), f"P/L {invest_total_pnl_pct:+.2f}%")
+        render_summary_card("Celkem XTB", fmt_czk(invest_total_value_czk), f"P/L {invest_total_pnl_pct:+.2f}%")
 
     st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
     if not invest_plans and stock_positions_count == 0:
-        st.info("Invest Tracker zatím neobsahuje aktivní investiční plán nebo My Trades akcie.")
+        st.info("Zatím tu nejsou žádné aktivní investiční plány ani My Trades akcie.")
     else:
         for plan in invest_plans:
             pnl_positive = plan["profit_loss"] >= 0
@@ -827,8 +896,8 @@ st.markdown(
     """
     <div class="tracker-header">
         <div>
-            <div class="tracker-title">Investown Tracker</div>
-            <div class="tracker-desc">Přehled Investown projektů</div>
+            <div class="tracker-title">Investown</div>
+            <div class="tracker-desc">Přehled Investown projektů na jednom místě</div>
         </div>
     </div>
     """,
@@ -846,9 +915,9 @@ with j4:
     render_summary_card("Počet projektů", str(investown_projects_count), "Aktivní projekty v přehledu")
 
 if not INVESTOWN_AVAILABLE:
-    st.info("Investown service zatím není dostupný.")
+    st.info("Investown data teď nejsou dostupná.")
 elif investown_projects_count == 0:
-    st.info("Investown Tracker zatím neobsahuje žádné projekty.")
+    st.info("Zatím tu nejsou žádné Investown projekty.")
 else:
     render_asset_card(
         title="Souhrnný výsledek Investown",
