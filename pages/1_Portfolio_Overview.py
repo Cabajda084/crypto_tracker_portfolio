@@ -62,6 +62,22 @@ def inject_css():
             padding-right: 0.9rem;
         }
 
+        .nav-row {
+            margin-bottom: 0.65rem;
+        }
+
+        .nav-row div[data-testid="stButton"] > button {
+            min-height: 42px;
+            border-radius: 14px;
+            background: #ffffff;
+            color: #111827;
+            border: 1px solid #e5e7eb;
+            box-shadow: none;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            margin-bottom: 0.2rem;
+        }
+
         .page-hero {
             background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
             border-radius: 28px;
@@ -112,30 +128,63 @@ def inject_css():
             background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
         }
 
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 0.9rem;
+        }
+
+        .hero-metric {
+            background: #ffffff;
+            border: 1px solid #eceff3;
+            border-radius: 20px;
+            padding: 16px 18px;
+        }
+
         .hero-label {
             font-size: 0.88rem;
             color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 0.45rem;
+            margin-bottom: 0.42rem;
             font-weight: 700;
         }
 
         .hero-value {
-            font-size: 2.7rem;
+            font-size: 2.25rem;
             line-height: 1.05;
             font-weight: 800;
             color: #111827;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.15rem;
         }
 
-        .hero-subrow {
+        .hero-subvalue {
+            color: #6b7280;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .hero-result {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
             align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            border: 1px solid #eceff3;
+            border-radius: 20px;
+            padding: 15px 18px;
+        }
+
+        .hero-result-left {
             color: #6b7280;
-            font-size: 0.96rem;
+            font-size: 0.94rem;
+        }
+
+        .hero-result-title {
+            color: #111827;
+            font-size: 0.95rem;
+            font-weight: 800;
+            margin-bottom: 0.2rem;
         }
 
         .summary-card {
@@ -240,7 +289,7 @@ def inject_css():
         .pill-negative,
         .pill-neutral {
             display: inline-block;
-            padding: 0.22rem 0.55rem;
+            padding: 0.28rem 0.6rem;
             border-radius: 999px;
             font-size: 0.84rem;
             font-weight: 700;
@@ -298,8 +347,13 @@ def inject_css():
                 padding: 18px 16px;
             }
 
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
             .hero-value {
-                font-size: 2.1rem;
+                font-size: 1.95rem;
             }
 
             .summary-value {
@@ -633,13 +687,31 @@ def format_amount(value):
 
 inject_css()
 
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+st.markdown('<div class="nav-row">', unsafe_allow_html=True)
+
+nav1, nav2, nav3 = st.columns([1, 1, 4])
+
+with nav1:
+    if st.button("← Domů"):
+        st.switch_page("Start.py")
+
+with nav2:
+    if st.button("Odhlásit se"):
+        st.session_state.authenticated = False
+        st.switch_page("Start.py")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
 st.markdown(
     """
     <div class="page-hero">
         <div class="page-badge">PŘEHLED</div>
         <div class="page-title">Moje portfolio</div>
         <div class="page-subtitle">
-            Celkový přehled portfolia napříč kryptem, XTB, My Trades a Investown.
+            Jednoduchý přehled toho, kolik je celkem investováno, kolik má portfolio teď hodnotu a jak si vede.
         </div>
     </div>
     """,
@@ -732,12 +804,26 @@ profit_class = "pill-positive" if total_pnl_czk >= 0 else "pill-negative"
 st.markdown(
     f"""
     <div class="hero-card">
-        <div class="hero-label">Celková hodnota portfolia</div>
-        <div class="hero-value">{fmt_czk(net_worth_czk)}</div>
-        <div class="hero-subrow">
-            <span>Celkem investováno: <strong>{fmt_czk(total_invested_czk)}</strong></span>
-            <span class="{profit_class}">{fmt_czk(total_pnl_czk)} · {total_pnl_pct_all:+.2f}%</span>
-            <span>1 USD = <strong>{usdczk:.2f} CZK</strong></span>
+        <div class="hero-grid">
+            <div class="hero-metric">
+                <div class="hero-label">Celkem investováno</div>
+                <div class="hero-value">{fmt_czk(total_invested_czk)}</div>
+                <div class="hero-subvalue">Všechny vložené prostředky dohromady</div>
+            </div>
+            <div class="hero-metric">
+                <div class="hero-label">Aktuální hodnota portfolia</div>
+                <div class="hero-value">{fmt_czk(net_worth_czk)}</div>
+                <div class="hero-subvalue">Kolik má portfolio hodnotu právě teď</div>
+            </div>
+        </div>
+        <div class="hero-result">
+            <div class="hero-result-left">
+                <div class="hero-result-title">Celkový výsledek</div>
+                <div>Rozdíl mezi investovanou částkou a aktuální hodnotou</div>
+            </div>
+            <div>
+                <span class="{profit_class}">{fmt_czk(total_pnl_czk)} · {total_pnl_pct_all:+.2f}%</span>
+            </div>
         </div>
     </div>
     """,
@@ -752,19 +838,19 @@ with top1:
     render_summary_card(
         "Kryptoměny",
         fmt_czk(crypto_total_value_czk),
-        f"Investováno {fmt_czk(crypto_total_cost_czk)} · P/L {fmt_czk(crypto_total_pnl_czk)} · {total_pnl_pct:+.2f}%",
+        f"Investováno {fmt_czk(crypto_total_cost_czk)} · Výsledek {fmt_czk(crypto_total_pnl_czk)} · {total_pnl_pct:+.2f}%",
     )
 with top2:
     render_summary_card(
         "XTB + My Trades",
         fmt_czk(invest_total_value_czk),
-        f"Plány + My Trades · Investováno {fmt_czk(invest_total_cost_czk)} · P/L {fmt_czk(invest_total_pnl_czk)} · {invest_total_pnl_pct:+.2f}%",
+        f"Investováno {fmt_czk(invest_total_cost_czk)} · Výsledek {fmt_czk(invest_total_pnl_czk)} · {invest_total_pnl_pct:+.2f}%",
     )
 with top3:
     render_summary_card(
         "Investown",
         fmt_czk(investown_total_value_czk),
-        f"Investováno {fmt_czk(investown_total_cost_czk)} · P/L {fmt_czk(investown_total_pnl_czk)} · {investown_total_pnl_pct:+.2f}%",
+        f"Investováno {fmt_czk(investown_total_cost_czk)} · Výsledek {fmt_czk(investown_total_pnl_czk)} · {investown_total_pnl_pct:+.2f}%",
     )
 
 # =========================================================
@@ -774,9 +860,9 @@ sub1, sub2, sub3 = st.columns(3)
 with sub1:
     render_summary_card("Celkem investováno", fmt_czk(total_invested_czk), "Součet všech vložených prostředků")
 with sub2:
-    render_summary_card("Celkový zisk / ztráta", fmt_czk(total_pnl_czk), f"{total_pnl_pct_all:+.2f}% celkem")
+    render_summary_card("Aktuální hodnota", fmt_czk(net_worth_czk), "Součet všech částí portfolia")
 with sub3:
-    render_summary_card("Kurz USD/CZK", f"{usdczk:.2f}", "Aktuální kurz použitý pro přepočet")
+    render_summary_card("Kurz USD/CZK", f"{usdczk:.2f}", "Použitý kurz pro přepočet")
 
 st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 
@@ -805,7 +891,7 @@ with col1:
     with c2:
         render_summary_card("Aktuální hodnota", format_usd(total_value_usd), format_czk_crypto(total_value_usd * usdczk))
     with c3:
-        render_summary_card("Zisk / ztráta", format_usd(total_pnl_usd), f"{total_pnl_pct:+.2f}%")
+        render_summary_card("Výsledek", format_usd(total_pnl_usd), f"{total_pnl_pct:+.2f}%")
 
     if unavailable_prices:
         st.warning("Dočasně se nepodařilo načíst cenu pro: " + ", ".join(unavailable_prices))
@@ -848,7 +934,7 @@ with col2:
     with i2:
         render_summary_card("Cash rezerva", fmt_czk(invest_cash_balance_czk), "Volná hotovost v plánech")
     with i3:
-        render_summary_card("Celkem XTB", fmt_czk(invest_total_value_czk), f"P/L {invest_total_pnl_pct:+.2f}%")
+        render_summary_card("Celkem XTB", fmt_czk(invest_total_value_czk), f"Výsledek {invest_total_pnl_pct:+.2f}%")
 
     st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
