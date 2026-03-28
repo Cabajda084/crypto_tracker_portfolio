@@ -82,7 +82,29 @@ st.markdown(
         font-size: 0.98rem;
         line-height: 1.55;
         color: #6b7280;
-        margin-bottom: 0;
+        margin-bottom: 0.6rem;
+    }
+
+    .quote-box {
+        background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+        border: 1px solid #c7d2fe;
+        border-radius: 18px;
+        padding: 0.9rem 1rem;
+        margin-top: 0.75rem;
+    }
+
+    .quote-text {
+        color: #3730a3;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        font-weight: 700;
+        margin-bottom: 0.45rem;
+    }
+
+    .quote-author {
+        color: #6366f1;
+        font-size: 0.82rem;
+        font-weight: 600;
     }
 
     .section-card {
@@ -106,37 +128,6 @@ st.markdown(
         font-size: 0.94rem;
         line-height: 1.5;
         margin-bottom: 0;
-    }
-
-    .security-note {
-        background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
-        border: 1px solid #fed7aa;
-        border-radius: 18px;
-        padding: 0.9rem 1rem;
-        color: #9a3412;
-        font-size: 0.91rem;
-        line-height: 1.45;
-        font-weight: 600;
-        margin-top: 0.85rem;
-    }
-
-    .info-note {
-        background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
-        border: 1px solid #c7d2fe;
-        border-radius: 18px;
-        padding: 0.9rem 1rem;
-        color: #3730a3;
-        font-size: 0.91rem;
-        line-height: 1.45;
-        font-weight: 600;
-        margin-top: 0.85rem;
-    }
-
-    .version-note {
-        text-align: center;
-        color: #9ca3af;
-        font-size: 0.78rem;
-        margin-top: 1rem;
     }
 
     div[data-testid="stTextInput"] {
@@ -221,15 +212,26 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 
-def render_header(badge: str, title: str, subtitle: str):
+def render_header(badge: str, title: str, subtitle: str, show_quote: bool = False):
     st.markdown('<div class="top-space"></div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-gradient"></div>', unsafe_allow_html=True)
+
+    quote_html = ""
+    if show_quote:
+        quote_html = """
+        <div class="quote-box">
+            <div class="quote-text">„Inflace nikdy nespí. Tvoje peníze by také neměly.“</div>
+            <div class="quote-author">Lucie Cabáková</div>
+        </div>
+        """
+
     st.markdown(
         f"""
         <div class="hero-card">
             <div class="hero-badge">{badge}</div>
             <div class="hero-title">{title}</div>
             <div class="hero-subtitle">{subtitle}</div>
+            {quote_html}
         </div>
         """,
         unsafe_allow_html=True,
@@ -238,9 +240,10 @@ def render_header(badge: str, title: str, subtitle: str):
 
 if not st.session_state.authenticated:
     render_header(
-        "MY PORTFOLIO",
-        "Vítej zpět",
-        "Bezpečný vstup do přehledu investic, krypta a portfolia. Pro pokračování zadej svůj PIN kód.",
+        "MOJE PORTFOLIO",
+        "Moje portfolio",
+        "Možná není perfektní, ale je moje.",
+        show_quote=True,
     )
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -250,7 +253,7 @@ if not st.session_state.authenticated:
         <div class="section-card">
             <div class="section-title">Přihlášení pomocí PIN</div>
             <div class="section-subtitle">
-                Aplikace obsahuje citlivé finanční údaje a je chráněná soukromým přístupem.
+                Zadej svůj PIN pro odemknutí aplikace.
             </div>
         </div>
         """,
@@ -271,20 +274,6 @@ if not st.session_state.authenticated:
         else:
             st.error("Neplatný PIN.")
 
-    st.markdown(
-        """
-        <div class="security-note">
-            Po dokončení práce doporučujeme aplikaci znovu zamknout kvůli ochraně citlivých údajů.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        '<div class="version-note">Soukromý přístup chráněný PIN kódem</div>',
-        unsafe_allow_html=True,
-    )
-
     st.stop()
 
 left, right = st.columns([4, 1])
@@ -296,9 +285,10 @@ with right:
     st.markdown('</div>', unsafe_allow_html=True)
 
 render_header(
-    "DASHBOARD",
-    "My Portfolio",
-    "Vyber sekci, do které chceš vstoupit. Rozcestník je navržený pro rychlý a přehledný mobilní přístup.",
+    "PŘEHLED",
+    "Moje portfolio",
+    "Možná není perfektní, ale je moje.",
+    show_quote=True,
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -306,9 +296,9 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     """
     <div class="section-card">
-        <div class="section-title">Hlavní sekce</div>
+        <div class="section-title">Vše důležité na jednom místě</div>
         <div class="section-subtitle">
-            Otevři Portfolio Overview, Crypto Tracker, Invest Tracker nebo Investown Tracker.
+            Otevři přehled portfolia, kryptoměny, XTB nebo Investown.
         </div>
     </div>
     """,
@@ -317,39 +307,18 @@ st.markdown(
 
 c1, c2 = st.columns(2)
 with c1:
-    if st.button("Portfolio Overview"):
+    if st.button("💼 Portfolio"):
         st.switch_page("pages/1_Portfolio_Overview.py")
+
 with c2:
-    if st.button("Crypto Tracker"):
+    if st.button("₿ Kryptoměny"):
         st.switch_page("pages/2_Crypto_Tracker.py")
 
 c3, c4 = st.columns(2)
 with c3:
-    if st.button("Invest Tracker"):
+    if st.button("📈 XTB"):
         st.switch_page("pages/3_Invest_Tracker.py")
+
 with c4:
-    if st.button("Investown Tracker"):
+    if st.button("🏠 Investown"):
         st.switch_page("pages/4_Investown_Tracker.py")
-
-st.markdown(
-    """
-    <div class="security-note">
-        Kvůli ochraně citlivých údajů se můžeš kdykoliv vrátit na zamčenou obrazovku tlačítkem „Odhlásit se“.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    """
-    <div class="info-note">
-        Aplikace byla úspěšně aktualizována.
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    '<div class="version-note">VERZE MOBILE UI 27-03</div>',
-    unsafe_allow_html=True,
-)
