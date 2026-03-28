@@ -116,18 +116,39 @@ st.markdown(
         margin-bottom: 0.9rem;
     }
 
-    .section-title {
-        font-size: 1.06rem;
-        font-weight: 800;
-        color: #111827;
-        margin-bottom: 0.35rem;
+    .grid-wrap {
+        margin-top: 0.35rem;
+        margin-bottom: 0.5rem;
     }
 
-    .section-subtitle {
-        color: #6b7280;
-        font-size: 0.94rem;
-        line-height: 1.5;
-        margin-bottom: 0;
+    .app-tile button {
+        aspect-ratio: 1 / 1;
+        min-height: 135px !important;
+        border-radius: 24px !important;
+        font-weight: 700 !important;
+        font-size: 1.02rem !important;
+        line-height: 1.35 !important;
+        padding: 1rem !important;
+        border: none !important;
+        background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%) !important;
+        color: white !important;
+        box-shadow: 0 10px 22px rgba(99, 102, 241, 0.18) !important;
+        white-space: pre-line !important;
+    }
+
+    .app-tile button:hover {
+        filter: brightness(1.03);
+    }
+
+    .logout-wrap div[data-testid="stButton"] > button {
+        min-height: 42px;
+        border-radius: 14px;
+        background: #ffffff;
+        color: #111827;
+        border: 1px solid #e5e7eb;
+        box-shadow: none;
+        font-size: 0.9rem;
+        white-space: nowrap;
     }
 
     div[data-testid="stTextInput"] {
@@ -158,16 +179,6 @@ st.markdown(
 
     div[data-testid="stButton"] > button:hover {
         filter: brightness(1.03);
-    }
-
-    .logout-wrap div[data-testid="stButton"] > button {
-        min-height: 42px;
-        border-radius: 14px;
-        background: #ffffff;
-        color: #111827;
-        border: 1px solid #e5e7eb;
-        box-shadow: none;
-        font-size: 0.9rem;
     }
 
     @media (max-width: 768px) {
@@ -201,6 +212,13 @@ st.markdown(
         .section-card {
             border-radius: 20px;
             padding: 0.95rem;
+        }
+
+        .app-tile button {
+            min-height: 128px !important;
+            border-radius: 22px !important;
+            font-size: 0.98rem !important;
+            padding: 0.85rem !important;
         }
     }
     </style>
@@ -292,33 +310,32 @@ render_header(
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
-st.markdown(
-    """
-    <div class="section-card">
-        <div class="section-title">Vše důležité na jednom místě</div>
-        <div class="section-subtitle">
-            Otevři přehled portfolia, kryptoměny, XTB nebo Investown.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown('<div class="grid-wrap">', unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
 with c1:
-    if st.button("💼 Portfolio"):
+    st.markdown('<div class="app-tile">', unsafe_allow_html=True)
+    if st.button("💼\nPortfolio"):
         st.switch_page("pages/1_Portfolio_Overview.py")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with c2:
-    if st.button("₿ Kryptoměny"):
+    st.markdown('<div class="app-tile">', unsafe_allow_html=True)
+    if st.button("₿\nKryptoměny"):
         st.switch_page("pages/2_Crypto_Tracker.py")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 c3, c4 = st.columns(2)
 with c3:
-    if st.button("📈 XTB"):
+    st.markdown('<div class="app-tile">', unsafe_allow_html=True)
+    if st.button("📈\nXTB"):
         st.switch_page("pages/3_Invest_Tracker.py")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with c4:
-    if st.button("🏠 Investown"):
+    st.markdown('<div class="app-tile">', unsafe_allow_html=True)
+    if st.button("🏡\nInvestown"):
         st.switch_page("pages/4_Investown_Tracker.py")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
