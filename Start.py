@@ -1,4 +1,3 @@
-import base64
 from pathlib import Path
 
 import streamlit as st
@@ -11,19 +10,7 @@ st.set_page_config(
 )
 
 PIN = "0602"
-PROFILE_IMAGE = Path("assets/profile.jpg")
-
-
-def image_to_base64(path: Path) -> str | None:
-    try:
-        if path.exists():
-            return base64.b64encode(path.read_bytes()).decode("utf-8")
-    except Exception:
-        return None
-    return None
-
-
-PROFILE_B64 = image_to_base64(PROFILE_IMAGE)
+PROFILE_IMAGE = Path("assets/profile.jpeg")
 
 st.markdown(
     """
@@ -46,8 +33,8 @@ st.markdown(
 
     .block-container {
         max-width: 560px;
-        padding-top: 0.9rem !important;
-        padding-bottom: 6.8rem !important;
+        padding-top: 0.95rem !important;
+        padding-bottom: 7rem !important;
         padding-left: 0.9rem !important;
         padding-right: 0.9rem !important;
     }
@@ -72,23 +59,6 @@ st.markdown(
         padding: 1rem 1rem 0.95rem 1rem;
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
         margin-bottom: 0.85rem;
-    }
-
-    .profile-wrap {
-        display: flex;
-        justify-content: center;
-        margin-top: -62px;
-        margin-bottom: 0.85rem;
-    }
-
-    .profile-avatar {
-        width: 108px;
-        height: 108px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid white;
-        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
-        background: #eef2ff;
     }
 
     .hero-badge {
@@ -206,16 +176,6 @@ st.markdown(
             padding: 0.95rem 0.95rem 0.9rem 0.95rem;
         }
 
-        .profile-wrap {
-            margin-top: -56px;
-            margin-bottom: 0.75rem;
-        }
-
-        .profile-avatar {
-            width: 96px;
-            height: 96px;
-        }
-
         .hero-title {
             font-size: 1.72rem;
             margin-bottom: 0.4rem;
@@ -255,36 +215,29 @@ if "authenticated" not in st.session_state:
 def render_header(badge: str, title: str, subtitle: str, show_quote: bool = False):
     st.markdown('<div class="top-space"></div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-gradient"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 
-    avatar_html = ""
-    if PROFILE_B64:
-        avatar_html = f'''
-        <div class="profile-wrap">
-            <img class="profile-avatar" src="data:image/jpeg;base64,{PROFILE_B64}" alt="Profilová fotka">
-        </div>
-        '''
+    if PROFILE_IMAGE.exists():
+        c1, c2, c3 = st.columns([1.2, 2, 1.2])
+        with c2:
+            st.image(str(PROFILE_IMAGE), use_container_width=True)
 
-    quote_html = ""
+    st.markdown(f'<div class="hero-badge">{badge}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="hero-title">{title}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="hero-subtitle">{subtitle}</div>', unsafe_allow_html=True)
+
     if show_quote:
-        quote_html = """
-        <div class="quote-box">
-            <div class="quote-text">„Inflace nikdy nespí. Tvoje peníze by také neměly.“</div>
-            <div class="quote-author">Lucie Cabáková</div>
-        </div>
-        """
+        st.markdown(
+            """
+            <div class="quote-box">
+                <div class="quote-text">„Inflace nikdy nespí. Tvoje peníze by také neměly.“</div>
+                <div class="quote-author">Lucie Cabáková</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    st.markdown(
-        f"""
-        <div class="hero-card">
-            {avatar_html}
-            <div class="hero-badge">{badge}</div>
-            <div class="hero-title">{title}</div>
-            <div class="hero-subtitle">{subtitle}</div>
-            {quote_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if not st.session_state.authenticated:
