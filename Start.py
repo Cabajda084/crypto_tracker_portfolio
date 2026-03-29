@@ -27,35 +27,24 @@ st.markdown(
         padding-right: 0.9rem !important;
     }
 
-    .top-space {
-        height: 8px;
+    .profile-image {
+        width: 180px;
+        margin: 0 auto 1rem auto;
     }
 
-    .hero-gradient {
-        height: 108px;
-        border-radius: 28px;
-        background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
-        box-shadow: 0 18px 42px rgba(67, 56, 202, 0.18);
-        margin-bottom: -28px;
+    .profile-image img {
+        border-radius: 22px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+        display: block;
     }
 
     .hero-card {
         background: rgba(255, 255, 255, 0.98);
         border: 1px solid #e5e7eb;
         border-radius: 26px;
-        padding: 1rem 1rem 0.95rem 1rem;
+        padding: 1.1rem 1rem 1rem 1rem;
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
-        margin-bottom: 0.85rem;
-    }
-
-    .photo-box {
-        width: 180px;
-        margin: 0 auto 0.9rem auto;
-    }
-
-    .photo-box img {
-        border-radius: 20px;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
+        margin-bottom: 0.9rem;
     }
 
     .hero-title {
@@ -72,7 +61,7 @@ st.markdown(
         font-size: 0.98rem;
         line-height: 1.45;
         color: #6b7280;
-        margin-bottom: 0.45rem;
+        margin-bottom: 0.6rem;
         text-align: center;
     }
 
@@ -115,7 +104,7 @@ st.markdown(
     }
 
     .center-box-wide {
-        width: 280px;
+        width: 300px;
         margin: 0 auto;
     }
 
@@ -166,20 +155,14 @@ st.markdown(
             padding-right: 0.8rem !important;
         }
 
-        .hero-gradient {
-            height: 102px;
-            border-radius: 26px;
-            margin-bottom: -24px;
+        .profile-image {
+            width: 170px;
+            margin: 0 auto 0.9rem auto;
         }
 
         .hero-card {
             border-radius: 24px;
-            padding: 0.95rem 0.95rem 0.9rem 0.95rem;
-        }
-
-        .photo-box {
-            width: 170px;
-            margin: 0 auto 0.8rem auto;
+            padding: 1rem 0.95rem 0.95rem 0.95rem;
         }
 
         .hero-title {
@@ -231,15 +214,12 @@ if "authenticated" not in st.session_state:
 
 
 def render_header(title: str, subtitle: str, show_quote: bool = False):
-    st.markdown('<div class="top-space"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-gradient"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-card">', unsafe_allow_html=True)
-
     if PROFILE_IMAGE.exists():
-        st.markdown('<div class="photo-box">', unsafe_allow_html=True)
+        st.markdown('<div class="profile-image">', unsafe_allow_html=True)
         st.image(str(PROFILE_IMAGE), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    st.markdown('<div class="hero-card">', unsafe_allow_html=True)
     st.markdown(f'<div class="hero-title">{title}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="hero-subtitle">{subtitle}</div>', unsafe_allow_html=True)
 
