@@ -1,3 +1,6 @@
+import base64
+from pathlib import Path
+
 import streamlit as st
 
 st.set_page_config(
@@ -8,6 +11,19 @@ st.set_page_config(
 )
 
 PIN = "0602"
+PROFILE_IMAGE = Path("assets/profile.jpg")
+
+
+def image_to_base64(path: Path) -> str | None:
+    try:
+        if path.exists():
+            return base64.b64encode(path.read_bytes()).decode("utf-8")
+    except Exception:
+        return None
+    return None
+
+
+PROFILE_B64 = image_to_base64(PROFILE_IMAGE)
 
 st.markdown(
     """
@@ -30,8 +46,8 @@ st.markdown(
 
     .block-container {
         max-width: 560px;
-        padding-top: 0.95rem !important;
-        padding-bottom: 7rem !important;
+        padding-top: 0.9rem !important;
+        padding-bottom: 6.8rem !important;
         padding-left: 0.9rem !important;
         padding-right: 0.9rem !important;
     }
@@ -41,11 +57,11 @@ st.markdown(
     }
 
     .hero-gradient {
-        height: 132px;
+        height: 128px;
         border-radius: 28px;
         background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
         box-shadow: 0 18px 42px rgba(67, 56, 202, 0.18);
-        margin-bottom: -44px;
+        margin-bottom: -46px;
     }
 
     .hero-card {
@@ -56,6 +72,23 @@ st.markdown(
         padding: 1rem 1rem 0.95rem 1rem;
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
         margin-bottom: 0.85rem;
+    }
+
+    .profile-wrap {
+        display: flex;
+        justify-content: center;
+        margin-top: -62px;
+        margin-bottom: 0.85rem;
+    }
+
+    .profile-avatar {
+        width: 108px;
+        height: 108px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
+        background: #eef2ff;
     }
 
     .hero-badge {
@@ -76,6 +109,7 @@ st.markdown(
         letter-spacing: -0.02em;
         color: #111827;
         margin-bottom: 0.45rem;
+        text-align: center;
     }
 
     .hero-subtitle {
@@ -83,6 +117,7 @@ st.markdown(
         line-height: 1.45;
         color: #6b7280;
         margin-bottom: 0.45rem;
+        text-align: center;
     }
 
     .quote-box {
@@ -99,35 +134,14 @@ st.markdown(
         line-height: 1.46;
         font-weight: 700;
         margin-bottom: 0.35rem;
+        text-align: center;
     }
 
     .quote-author {
         color: #6366f1;
         font-size: 0.82rem;
         font-weight: 600;
-    }
-
-    .section-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 22px;
-        padding: 0.95rem;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
-        margin-bottom: 0.75rem;
-    }
-
-    .section-title {
-        font-size: 1.04rem;
-        font-weight: 800;
-        color: #111827;
-        margin-bottom: 0.25rem;
-    }
-
-    .section-subtitle {
-        color: #6b7280;
-        font-size: 0.93rem;
-        line-height: 1.45;
-        margin-bottom: 0;
+        text-align: center;
     }
 
     .logout-note {
@@ -153,7 +167,6 @@ st.markdown(
         padding-left: 0.9rem;
     }
 
-    /* Default button style for launchers and PIN */
     div[data-testid="stButton"] > button {
         width: 100%;
         min-height: 66px;
@@ -177,24 +190,30 @@ st.markdown(
         .block-container {
             max-width: 100%;
             padding-top: 0.85rem !important;
-            padding-bottom: 7.5rem !important;
+            padding-bottom: 7.4rem !important;
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
         }
 
-        .top-space {
-            height: 6px;
-        }
-
         .hero-gradient {
-            height: 122px;
+            height: 118px;
             border-radius: 26px;
-            margin-bottom: -40px;
+            margin-bottom: -42px;
         }
 
         .hero-card {
             border-radius: 24px;
             padding: 0.95rem 0.95rem 0.9rem 0.95rem;
+        }
+
+        .profile-wrap {
+            margin-top: -56px;
+            margin-bottom: 0.75rem;
+        }
+
+        .profile-avatar {
+            width: 96px;
+            height: 96px;
         }
 
         .hero-title {
@@ -237,6 +256,14 @@ def render_header(badge: str, title: str, subtitle: str, show_quote: bool = Fals
     st.markdown('<div class="top-space"></div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-gradient"></div>', unsafe_allow_html=True)
 
+    avatar_html = ""
+    if PROFILE_B64:
+        avatar_html = f'''
+        <div class="profile-wrap">
+            <img class="profile-avatar" src="data:image/jpeg;base64,{PROFILE_B64}" alt="Profilová fotka">
+        </div>
+        '''
+
     quote_html = ""
     if show_quote:
         quote_html = """
@@ -249,6 +276,7 @@ def render_header(badge: str, title: str, subtitle: str, show_quote: bool = Fals
     st.markdown(
         f"""
         <div class="hero-card">
+            {avatar_html}
             <div class="hero-badge">{badge}</div>
             <div class="hero-title">{title}</div>
             <div class="hero-subtitle">{subtitle}</div>
@@ -265,18 +293,6 @@ if not st.session_state.authenticated:
         "Moje portfolio",
         "Možná není perfektní, ale je moje.",
         show_quote=True,
-    )
-
-    st.markdown(
-        """
-        <div class="section-card">
-            <div class="section-title">Přihlášení pomocí PIN</div>
-            <div class="section-subtitle">
-                Zadej svůj PIN pro odemknutí aplikace.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
     )
 
     pin_input = st.text_input(
