@@ -114,6 +114,20 @@ st.markdown(
         text-align: center;
     }
 
+    .photo-wrap {
+        margin-top: -28px;
+        margin-bottom: 0.8rem;
+        text-align: center;
+    }
+
+    .photo-frame {
+        display: inline-block;
+        background: white;
+        padding: 6px;
+        border-radius: 20px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+    }
+
     .logout-note {
         margin-top: 0.15rem;
         margin-bottom: 0.75rem;
@@ -195,6 +209,11 @@ st.markdown(
             line-height: 1.4;
         }
 
+        .photo-wrap {
+            margin-top: -24px;
+            margin-bottom: 0.7rem;
+        }
+
         div[data-testid="stButton"] > button {
             min-height: 64px;
             font-size: 1rem;
@@ -218,9 +237,11 @@ def render_header(badge: str, title: str, subtitle: str, show_quote: bool = Fals
     st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 
     if PROFILE_IMAGE.exists():
-        c1, c2, c3 = st.columns([1.2, 2, 1.2])
+        st.markdown('<div class="photo-wrap"><div class="photo-frame">', unsafe_allow_html=True)
+        c1, c2, c3 = st.columns([1.2, 1, 1.2])
         with c2:
-            st.image(str(PROFILE_IMAGE), use_container_width=True)
+            st.image(str(PROFILE_IMAGE), width=140)
+        st.markdown('</div></div>', unsafe_allow_html=True)
 
     st.markdown(f'<div class="hero-badge">{badge}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="hero-title">{title}</div>', unsafe_allow_html=True)
@@ -255,12 +276,14 @@ if not st.session_state.authenticated:
         label_visibility="collapsed",
     )
 
-    if st.button("Odemknout aplikaci"):
-        if pin_input == PIN:
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("Neplatný PIN.")
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c2:
+        if st.button("Odemknout aplikaci"):
+            if pin_input == PIN:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Neplatný PIN.")
 
     st.stop()
 
