@@ -32,11 +32,11 @@ st.markdown(
     }
 
     .hero-gradient {
-        height: 112px;
+        height: 108px;
         border-radius: 28px;
         background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
         box-shadow: 0 18px 42px rgba(67, 56, 202, 0.18);
-        margin-bottom: -34px;
+        margin-bottom: -28px;
     }
 
     .hero-card {
@@ -46,6 +46,16 @@ st.markdown(
         padding: 1rem 1rem 0.95rem 1rem;
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
         margin-bottom: 0.85rem;
+    }
+
+    .photo-box {
+        width: 180px;
+        margin: 0 auto 0.9rem auto;
+    }
+
+    .photo-box img {
+        border-radius: 20px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.15);
     }
 
     .hero-title {
@@ -90,11 +100,6 @@ st.markdown(
         text-align: center;
     }
 
-    .photo-row {
-        margin-top: -14px;
-        margin-bottom: 0.8rem;
-    }
-
     .logout-note {
         margin-top: 0.15rem;
         margin-bottom: 0.75rem;
@@ -102,6 +107,16 @@ st.markdown(
 
     .launcher-space {
         height: 0.25rem;
+    }
+
+    .center-box {
+        width: 260px;
+        margin: 0 auto;
+    }
+
+    .center-box-wide {
+        width: 280px;
+        margin: 0 auto;
     }
 
     div[data-testid="stTextInput"] {
@@ -145,21 +160,26 @@ st.markdown(
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
-            padding-top: 0.85rem !important;
+            padding-top: 0.8rem !important;
             padding-bottom: 7.4rem !important;
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
         }
 
         .hero-gradient {
-            height: 104px;
+            height: 102px;
             border-radius: 26px;
-            margin-bottom: -30px;
+            margin-bottom: -24px;
         }
 
         .hero-card {
             border-radius: 24px;
             padding: 0.95rem 0.95rem 0.9rem 0.95rem;
+        }
+
+        .photo-box {
+            width: 170px;
+            margin: 0 auto 0.8rem auto;
         }
 
         .hero-title {
@@ -181,9 +201,12 @@ st.markdown(
             line-height: 1.4;
         }
 
-        .photo-row {
-            margin-top: -10px;
-            margin-bottom: 0.7rem;
+        .center-box {
+            width: 240px;
+        }
+
+        .center-box-wide {
+            width: 260px;
         }
 
         div[data-testid="stButton"] > button {
@@ -213,10 +236,8 @@ def render_header(title: str, subtitle: str, show_quote: bool = False):
     st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 
     if PROFILE_IMAGE.exists():
-        st.markdown('<div class="photo-row">', unsafe_allow_html=True)
-        left, center, right = st.columns([1, 2, 1])
-        with center:
-            st.image(str(PROFILE_IMAGE), width=180)
+        st.markdown('<div class="photo-box">', unsafe_allow_html=True)
+        st.image(str(PROFILE_IMAGE), use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown(f'<div class="hero-title">{title}</div>', unsafe_allow_html=True)
@@ -250,16 +271,14 @@ if not st.session_state.authenticated:
         label_visibility="collapsed",
     )
 
-    st.markdown('<div class="center-button">', unsafe_allow_html=True)
-    left, center, right = st.columns([1, 2, 1])
-    with center:
-        if st.button("Odemknout aplikaci"):
-            if pin_input == PIN:
-                st.session_state.authenticated = True
-                st.rerun()
-            else:
-                st.error("Neplatný PIN.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="center-button"><div class="center-box-wide">', unsafe_allow_html=True)
+    if st.button("Odemknout aplikaci"):
+        if pin_input == PIN:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Neplatný PIN.")
+    st.markdown('</div></div>', unsafe_allow_html=True)
 
     st.stop()
 
@@ -271,13 +290,11 @@ render_header(
 
 st.markdown('<div class="logout-note"></div>', unsafe_allow_html=True)
 
-st.markdown('<div class="center-button">', unsafe_allow_html=True)
-left, center, right = st.columns([1, 2, 1])
-with center:
-    if st.button("Odhlásit se"):
-        st.session_state.authenticated = False
-        st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('<div class="center-button"><div class="center-box">', unsafe_allow_html=True)
+if st.button("Odhlásit se"):
+    st.session_state.authenticated = False
+    st.rerun()
+st.markdown('</div></div>', unsafe_allow_html=True)
 
 st.markdown('<div class="launcher-space"></div>', unsafe_allow_html=True)
 
