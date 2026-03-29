@@ -44,11 +44,11 @@ st.markdown(
     }
 
     .hero-gradient {
-        height: 128px;
+        height: 118px;
         border-radius: 28px;
         background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
         box-shadow: 0 18px 42px rgba(67, 56, 202, 0.18);
-        margin-bottom: -46px;
+        margin-bottom: -38px;
     }
 
     .hero-card {
@@ -61,15 +61,9 @@ st.markdown(
         margin-bottom: 0.85rem;
     }
 
-    .hero-badge {
-        display: inline-block;
-        background: #eef2ff;
-        color: #4338ca;
-        border-radius: 999px;
-        padding: 6px 12px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        margin-bottom: 0.7rem;
+    .photo-wrap {
+        margin-top: -18px;
+        margin-bottom: 0.8rem;
     }
 
     .hero-title {
@@ -114,20 +108,6 @@ st.markdown(
         text-align: center;
     }
 
-    .photo-wrap {
-        margin-top: -28px;
-        margin-bottom: 0.8rem;
-        text-align: center;
-    }
-
-    .photo-frame {
-        display: inline-block;
-        background: white;
-        padding: 6px;
-        border-radius: 20px;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
-    }
-
     .logout-note {
         margin-top: 0.15rem;
         margin-bottom: 0.75rem;
@@ -170,6 +150,11 @@ st.markdown(
         filter: brightness(1.03);
     }
 
+    .center-button div[data-testid="stButton"] > button {
+        text-align: center;
+        padding-left: 0;
+    }
+
     @media (max-width: 768px) {
         .block-container {
             max-width: 100%;
@@ -180,14 +165,19 @@ st.markdown(
         }
 
         .hero-gradient {
-            height: 118px;
+            height: 110px;
             border-radius: 26px;
-            margin-bottom: -42px;
+            margin-bottom: -34px;
         }
 
         .hero-card {
             border-radius: 24px;
             padding: 0.95rem 0.95rem 0.9rem 0.95rem;
+        }
+
+        .photo-wrap {
+            margin-top: -10px;
+            margin-bottom: 0.7rem;
         }
 
         .hero-title {
@@ -209,17 +199,16 @@ st.markdown(
             line-height: 1.4;
         }
 
-        .photo-wrap {
-            margin-top: -24px;
-            margin-bottom: 0.7rem;
-        }
-
         div[data-testid="stButton"] > button {
             min-height: 64px;
             font-size: 1rem;
             border-radius: 20px;
             padding-left: 0.95rem;
             margin-bottom: 0.56rem;
+        }
+
+        .center-button div[data-testid="stButton"] > button {
+            padding-left: 0;
         }
     }
     </style>
@@ -231,19 +220,18 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 
-def render_header(badge: str, title: str, subtitle: str, show_quote: bool = False):
+def render_header(title: str, subtitle: str, show_quote: bool = False):
     st.markdown('<div class="top-space"></div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-gradient"></div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-card">', unsafe_allow_html=True)
 
     if PROFILE_IMAGE.exists():
-        st.markdown('<div class="photo-wrap"><div class="photo-frame">', unsafe_allow_html=True)
-        c1, c2, c3 = st.columns([1.2, 1, 1.2])
-        with c2:
-            st.image(str(PROFILE_IMAGE), width=140)
-        st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="photo-wrap">', unsafe_allow_html=True)
+        left, center, right = st.columns([1, 1.2, 1])
+        with center:
+            st.image(str(PROFILE_IMAGE), width=160)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown(f'<div class="hero-badge">{badge}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="hero-title">{title}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="hero-subtitle">{subtitle}</div>', unsafe_allow_html=True)
 
@@ -263,7 +251,6 @@ def render_header(badge: str, title: str, subtitle: str, show_quote: bool = Fals
 
 if not st.session_state.authenticated:
     render_header(
-        "MOJE PORTFOLIO",
         "Moje portfolio",
         "Možná není perfektní, ale je moje.",
         show_quote=True,
@@ -276,28 +263,34 @@ if not st.session_state.authenticated:
         label_visibility="collapsed",
     )
 
-    c1, c2, c3 = st.columns([1, 1, 1])
-    with c2:
+    st.markdown('<div class="center-button">', unsafe_allow_html=True)
+    left, center, right = st.columns([1, 1.3, 1])
+    with center:
         if st.button("Odemknout aplikaci"):
             if pin_input == PIN:
                 st.session_state.authenticated = True
                 st.rerun()
             else:
                 st.error("Neplatný PIN.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
 
 render_header(
-    "PŘEHLED",
     "Moje portfolio",
     "Možná není perfektní, ale je moje.",
     show_quote=True,
 )
 
 st.markdown('<div class="logout-note"></div>', unsafe_allow_html=True)
-if st.button("Odhlásit se"):
-    st.session_state.authenticated = False
-    st.rerun()
+
+st.markdown('<div class="center-button">', unsafe_allow_html=True)
+left, center, right = st.columns([1, 1.2, 1])
+with center:
+    if st.button("Odhlásit se"):
+        st.session_state.authenticated = False
+        st.rerun()
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="launcher-space"></div>', unsafe_allow_html=True)
 
