@@ -128,10 +128,7 @@ def inject_css():
             background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
         }
 
-        .hero-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
+        .hero-single {
             margin-bottom: 0.9rem;
         }
 
@@ -345,11 +342,6 @@ def inject_css():
 
             .hero-card {
                 padding: 18px 16px;
-            }
-
-            .hero-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
             }
 
             .hero-value {
@@ -799,21 +791,16 @@ total_pnl_pct_all = (total_pnl_czk / total_invested_czk * 100) if total_invested
 profit_class = "pill-positive" if total_pnl_czk >= 0 else "pill-negative"
 
 # =========================================================
-# HERO
+# HERO - ONLY TOTAL INVESTED
 # =========================================================
 st.markdown(
     f"""
     <div class="hero-card">
-        <div class="hero-grid">
+        <div class="hero-single">
             <div class="hero-metric">
                 <div class="hero-label">Celkem investováno</div>
                 <div class="hero-value">{fmt_czk(total_invested_czk)}</div>
                 <div class="hero-subvalue">Všechny vložené prostředky dohromady</div>
-            </div>
-            <div class="hero-metric">
-                <div class="hero-label">Aktuální hodnota portfolia</div>
-                <div class="hero-value">{fmt_czk(net_worth_czk)}</div>
-                <div class="hero-subvalue">Kolik má portfolio hodnotu právě teď</div>
             </div>
         </div>
         <div class="hero-result">
@@ -834,18 +821,21 @@ st.markdown(
 # TOP SUMMARY CARDS
 # =========================================================
 top1, top2, top3 = st.columns(3)
+
 with top1:
     render_summary_card(
         "Kryptoměny",
         fmt_czk(crypto_total_value_czk),
         f"Investováno {fmt_czk(crypto_total_cost_czk)} · Výsledek {fmt_czk(crypto_total_pnl_czk)} · {total_pnl_pct:+.2f}%",
     )
+
 with top2:
     render_summary_card(
         "XTB + My Trades",
         fmt_czk(invest_total_value_czk),
         f"Investováno {fmt_czk(invest_total_cost_czk)} · Výsledek {fmt_czk(invest_total_pnl_czk)} · {invest_total_pnl_pct:+.2f}%",
     )
+
 with top3:
     render_summary_card(
         "Investown",
@@ -854,125 +844,157 @@ with top3:
     )
 
 # =========================================================
-# SECONDARY SUMMARY
+# SECONDARY SUMMARY - CURRENT VALUE MOVED LOWER
 # =========================================================
 sub1, sub2, sub3 = st.columns(3)
+
 with sub1:
-    render_summary_card("Celkem investováno", fmt_czk(total_invested_czk), "Součet všech vložených prostředků")
-with sub2:
     render_summary_card("Aktuální hodnota", fmt_czk(net_worth_czk), "Součet všech částí portfolia")
+
+with sub2:
+    render_summary_card("Celkový výsledek", fmt_czk(total_pnl_czk), f"{total_pnl_pct_all:+.2f}%")
+
 with sub3:
     render_summary_card("Kurz USD/CZK", f"{usdczk:.2f}", "Použitý kurz pro přepočet")
 
 st.markdown('<div class="section-spacer"></div>', unsafe_allow_html=True)
 
 # =========================================================
-# CRYPTO + INVEST
+# CRYPTO
 # =========================================================
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown('<div class="tracker-card">', unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class="tracker-header">
-            <div>
-                <div class="tracker-title">Kryptoměny</div>
-                <div class="tracker-desc">Přehled kryptoměnové části portfolia</div>
-            </div>
+st.markdown('<div class="tracker-card">', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="tracker-header">
+        <div>
+            <div class="tracker-title">Kryptoměny</div>
+            <div class="tracker-desc">Přehled kryptoměnové části portfolia</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    render_summary_card("Investováno", format_usd(total_cost_usd), format_czk_crypto(total_cost_usd * usdczk))
+with c2:
+    render_summary_card("Aktuální hodnota", format_usd(total_value_usd), format_czk_crypto(total_value_usd * usdczk))
+with c3:
+    render_summary_card("Výsledek", format_usd(total_pnl_usd), f"{total_pnl_pct:+.2f}%")
+
+if unavailable_prices:
+    st.warning("Dočasně se nepodařilo načíst cenu pro: " + ", ".join(unavailable_prices))
+
+st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+
+for coin in TRACKED_COINS:
+    m = coin_metrics[coin]
+    render_asset_card(
+        title=f"{pretty_coin_name(coin)} ({pretty_coin_ticker(coin)})",
+        subtitle=f"Množství: {format_amount(m['amount'])}",
+        value=format_usd(m["value_usd"]),
+        pnl_text=(
+            f"{m['pnl_pct']:+.2f}%"
+            if m["pnl_pct"] is not None
+            else "Cena nedostupná"
+        ),
+        pnl_positive=(m["pnl_pct"] >= 0) if m["pnl_pct"] is not None else None,
     )
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        render_summary_card("Investováno", format_usd(total_cost_usd), format_czk_crypto(total_cost_usd * usdczk))
-    with c2:
-        render_summary_card("Aktuální hodnota", format_usd(total_value_usd), format_czk_crypto(total_value_usd * usdczk))
-    with c3:
-        render_summary_card("Výsledek", format_usd(total_pnl_usd), f"{total_pnl_pct:+.2f}%")
+st.markdown("</div>", unsafe_allow_html=True)
 
-    if unavailable_prices:
-        st.warning("Dočasně se nepodařilo načíst cenu pro: " + ", ".join(unavailable_prices))
+# =========================================================
+# XTB
+# =========================================================
+st.markdown('<div class="tracker-card">', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="tracker-header">
+        <div>
+            <div class="tracker-title">XTB</div>
+            <div class="tracker-desc">Přehled investičních plánů XTB</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-    st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+x1, x2, x3 = st.columns(3)
+with x1:
+    render_summary_card("Hodnota pozic", fmt_czk(invest_positions_value_czk_base), "Aktuální hodnota plánů")
+with x2:
+    render_summary_card("Cash rezerva", fmt_czk(invest_cash_balance_czk), "Volná hotovost v plánech")
+with x3:
+    render_summary_card("Celkem XTB", fmt_czk(invest_total_value_czk_base), f"Výsledek {((invest_total_pnl_czk_base / invest_total_cost_czk_base) * 100 if invest_total_cost_czk_base > 0 else 0.0):+.2f}%")
 
-    for coin in TRACKED_COINS:
-        m = coin_metrics[coin]
+st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+
+if not invest_plans:
+    st.info("Zatím tu nejsou žádné aktivní investiční plány.")
+else:
+    for plan in invest_plans:
+        pnl_positive = plan["profit_loss"] >= 0
         render_asset_card(
-            title=f"{pretty_coin_name(coin)} ({pretty_coin_ticker(coin)})",
-            subtitle=f"Množství: {format_amount(m['amount'])}",
-            value=format_usd(m["value_usd"]),
-            pnl_text=(
-                f"{m['pnl_pct']:+.2f}%"
-                if m["pnl_pct"] is not None
-                else "Cena nedostupná"
-            ),
-            pnl_positive=(m["pnl_pct"] >= 0) if m["pnl_pct"] is not None else None,
+            title=f"{plan['icon']} {plan['display_name']}",
+            subtitle=f"Pozice: {fmt_czk(plan['positions_value'])} · Cash: {fmt_czk(plan['cash_balance'])}",
+            value=fmt_czk(plan["portfolio_value"]),
+            pnl_text=f"{plan['profit_loss_pct']:+.2f}%",
+            pnl_positive=pnl_positive,
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
-with col2:
-    st.markdown('<div class="tracker-card">', unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class="tracker-header">
-            <div>
-                <div class="tracker-title">XTB a My Trades</div>
-                <div class="tracker-desc">Přehled investičních plánů a akciových obchodů</div>
-            </div>
+# =========================================================
+# MY TRADES
+# =========================================================
+st.markdown('<div class="tracker-card">', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="tracker-header">
+        <div>
+            <div class="tracker-title">My Trades</div>
+            <div class="tracker-desc">Přehled akciových obchodů a otevřených pozic</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+m1, m2, m3 = st.columns(3)
+with m1:
+    render_summary_card("Investováno", fmt_czk(stock_total_cost_czk), "Celkový cost basis")
+with m2:
+    render_summary_card("Aktuální hodnota", fmt_czk(stock_total_value_czk), "Součet otevřených pozic")
+with m3:
+    render_summary_card("Výsledek", fmt_czk(stock_total_pnl_czk), f"{stock_total_pnl_pct:+.2f}%")
+
+st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+
+if stock_positions_count == 0:
+    st.info("Zatím tu nejsou žádné My Trades akcie.")
+else:
+    render_asset_card(
+        title="📊 My Trades akcie",
+        subtitle=f"Pozice: {stock_positions_count} · Investováno: {fmt_czk(stock_total_cost_czk)}",
+        value=fmt_czk(stock_total_value_czk),
+        pnl_text=f"{stock_total_pnl_pct:+.2f}%",
+        pnl_positive=stock_total_pnl_czk >= 0,
     )
 
-    i1, i2, i3 = st.columns(3)
-    with i1:
-        render_summary_card("Hodnota pozic", fmt_czk(invest_positions_value_czk), "Plány + My Trades")
-    with i2:
-        render_summary_card("Cash rezerva", fmt_czk(invest_cash_balance_czk), "Volná hotovost v plánech")
-    with i3:
-        render_summary_card("Celkem XTB", fmt_czk(invest_total_value_czk), f"Výsledek {invest_total_pnl_pct:+.2f}%")
+    for position in stock_positions:
+        qty = float(position.get("quantity_open", 0.0) or 0.0)
+        title = f"{position.get('name', position.get('ticker', 'Akcie'))} ({position.get('ticker', '')})"
+        subtitle = f"Množství: {f'{qty:.4f}'.rstrip('0').rstrip('.')} · Měna: {position.get('currency', 'N/A')}"
+        render_asset_card(
+            title=title,
+            subtitle=subtitle,
+            value=fmt_czk(float(position.get("market_value", 0.0) or 0.0)),
+            pnl_text=fmt_czk(float(position.get("unrealized_pnl", 0.0) or 0.0)),
+            pnl_positive=float(position.get("unrealized_pnl", 0.0) or 0.0) >= 0,
+        )
 
-    st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
-
-    if not invest_plans and stock_positions_count == 0:
-        st.info("Zatím tu nejsou žádné aktivní investiční plány ani My Trades akcie.")
-    else:
-        for plan in invest_plans:
-            pnl_positive = plan["profit_loss"] >= 0
-            render_asset_card(
-                title=f"{plan['icon']} {plan['display_name']}",
-                subtitle=f"Pozice: {fmt_czk(plan['positions_value'])} · Cash: {fmt_czk(plan['cash_balance'])}",
-                value=fmt_czk(plan["portfolio_value"]),
-                pnl_text=f"{plan['profit_loss_pct']:+.2f}%",
-                pnl_positive=pnl_positive,
-            )
-
-        if stock_positions_count > 0:
-            render_asset_card(
-                title="📊 My Trades akcie",
-                subtitle=f"Pozice: {stock_positions_count} · Investováno: {fmt_czk(stock_total_cost_czk)}",
-                value=fmt_czk(stock_total_value_czk),
-                pnl_text=f"{stock_total_pnl_pct:+.2f}%",
-                pnl_positive=stock_total_pnl_czk >= 0,
-            )
-
-            for position in stock_positions:
-                qty = float(position.get("quantity_open", 0.0) or 0.0)
-                title = f"{position.get('name', position.get('ticker', 'Akcie'))} ({position.get('ticker', '')})"
-                subtitle = f"Množství: {f'{qty:.4f}'.rstrip('0').rstrip('.')} · Měna: {position.get('currency', 'N/A')}"
-                render_asset_card(
-                    title=title,
-                    subtitle=subtitle,
-                    value=fmt_czk(float(position.get("market_value", 0.0) or 0.0)),
-                    pnl_text=fmt_czk(float(position.get("unrealized_pnl", 0.0) or 0.0)),
-                    pnl_positive=float(position.get("unrealized_pnl", 0.0) or 0.0) >= 0,
-                )
-
-    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
 # INVESTOWN
