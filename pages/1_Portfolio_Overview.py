@@ -1,3 +1,4 @@
+import json
 import streamlit as st
 import pandas as pd
 import requests
@@ -27,11 +28,38 @@ except Exception:
 
 
 DATA_FILE = "transactions.csv"
+PRICE_CACHE_FILE = "crypto_price_cache.json"
 TRACKED_COINS = ["bitcoin", "ethereum", "solana", "polkadot"]
 
 # Poslední známé ceny v rámci běžící app session / procesu.
 # Když externí API krátce selže, portfolio nespadne na 0.
 LAST_KNOWN_PRICES = {}
+
+REQUEST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (MyPortfolio/1.0; Streamlit)",
+    "Accept": "application/json",
+}
+
+BINANCE_SYMBOL_MAP = {
+    "bitcoin": "BTCUSDT",
+    "ethereum": "ETHUSDT",
+    "solana": "SOLUSDT",
+    "polkadot": "DOTUSDT",
+}
+
+KRAKEN_PAIR_MAP = {
+    "bitcoin": "XBTUSD",
+    "ethereum": "ETHUSD",
+    "solana": "SOLUSD",
+    "polkadot": "DOTUSD",
+}
+
+COINBASE_SYMBOL_MAP = {
+    "bitcoin": "BTC",
+    "ethereum": "ETH",
+    "solana": "SOL",
+    "polkadot": "DOT",
+}
 
 
 def inject_css():
@@ -411,17 +439,6 @@ def render_asset_card(title: str, subtitle: str, value: str, pnl_text: str = "",
     )
 
 
-def load_data() -> pd.DataFrame:
-    try:
-        df = pd.read_csv(DATA_FILE)
-        for col in ["date", "coin", "amount", "price"]:
-            if col not in df.columns:
-                df[col] = None
-        return df[["date", "coin", "amount", "price"]]
-    except Exception:
-        return pd.DataFrame(columns=["date", "coin", "amount", "price"])
-
-
 def normalize_coin(coin: str) -> str:
     c = (coin or "").strip().lower()
     mapping = {
@@ -436,6 +453,137 @@ def normalize_coin(coin: str) -> str:
         "polkadot": "polkadot",
     }
     return mapping.get(c, c)
+
+
+def load_price_cache() -> dict:
+    try:
+        with open(PRICE_CACHE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            clean = {}
+            for key, value in data.items():
+                try:
+                    clean[normalize_coin(str(key))] = float(value)
+                except Exception:
+                    continue
+            return clean
+    except Exception:
+        pass
+    return {}
+
+
+def save_price_cache(cache: dict) -> None:
+    try:
+        with open(PRICE_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def safe_get_json(url: str, params: dict | None = None, timeout: int = 10):
+    try:
+        r = requests.get(
+            url,
+            params=params,
+            headers=REQUEST_HEADERS,
+            timeout=timeout,
+        )
+        if r.status_code == 200:
+            return r.json()
+    except Exception:
+        pass
+    return None
+
+
+def get_price_from_coingecko(coin_id: str):
+    data = safe_get_json(
+        "https://api.coingecko.com/api/v3/simple/price",
+        params={"ids": coin_id, "vs_currencies": "usd"},
+        timeout=10,
+    )
+    if isinstance(data, dict) and coin_id in data and "usd" in data[coin_id]:
+        try:
+            return float(data[coin_id]["usd"])
+        except Exception:
+            pass
+    return None
+
+
+def get_price_from_binance(coin_id: str):
+    symbol = BINANCE_SYMBOL_MAP.get(coin_id)
+    if not symbol:
+        return None
+
+    endpoints = [
+        "https://api.binance.com/api/v3/ticker/price",
+        "https://api-gcp.binance.com/api/v3/ticker/price",
+        "https://api1.binance.com/api/v3/ticker/price",
+        "https://api2.binance.com/api/v3/ticker/price",
+        "https://api3.binance.com/api/v3/ticker/price",
+        "https://api4.binance.com/api/v3/ticker/price",
+    ]
+
+    for endpoint in endpoints:
+        data = safe_get_json(endpoint, params={"symbol": symbol}, timeout=8)
+        if isinstance(data, dict) and "price" in data:
+            try:
+                return float(data["price"])
+            except Exception:
+                continue
+
+    return None
+
+
+def get_price_from_coinbase(coin_id: str):
+    symbol = COINBASE_SYMBOL_MAP.get(coin_id)
+    if not symbol:
+        return None
+
+    data = safe_get_json(
+        "https://api.coinbase.com/v2/exchange-rates",
+        params={"currency": symbol},
+        timeout=10,
+    )
+    try:
+        return float(data["data"]["rates"]["USD"])
+    except Exception:
+        return None
+
+
+def get_price_from_kraken(coin_id: str):
+    pair = KRAKEN_PAIR_MAP.get(coin_id)
+    if not pair:
+        return None
+
+    data = safe_get_json(
+        "https://api.kraken.com/0/public/Ticker",
+        params={"pair": pair},
+        timeout=10,
+    )
+
+    try:
+        result = data.get("result", {})
+        if not isinstance(result, dict):
+            return None
+
+        for _, pair_data in result.items():
+            if isinstance(pair_data, dict) and "c" in pair_data and pair_data["c"]:
+                return float(pair_data["c"][0])
+    except Exception:
+        pass
+
+    return None
+
+
+def load_data() -> pd.DataFrame:
+    try:
+        df = pd.read_csv(DATA_FILE)
+        for col in ["date", "coin", "amount", "price"]:
+            if col not in df.columns:
+                df[col] = None
+        return df[["date", "coin", "amount", "price"]]
+    except Exception:
+        return pd.DataFrame(columns=["date", "coin", "amount", "price"])
 
 
 def pretty_coin_name(coin: str) -> str:
@@ -472,69 +620,52 @@ def prepare_transactions(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=45)
 def get_crypto_price(coin: str):
     coin_id = normalize_coin(coin)
 
-    try:
-        url = "https://api.coingecko.com/api/v3/simple/price"
-        params = {"ids": coin_id, "vs_currencies": "usd"}
+    providers = [
+        get_price_from_coingecko,
+        get_price_from_binance,
+        get_price_from_coinbase,
+        get_price_from_kraken,
+    ]
 
-        r = requests.get(url, params=params, timeout=10)
-
-        if r.status_code == 200:
-            data = r.json()
-            if isinstance(data, dict) and coin_id in data and "usd" in data[coin_id]:
-                return float(data[coin_id]["usd"])
-
-        if r.status_code == 429:
-            pass
-
-    except Exception:
-        pass
-
-    try:
-        symbol_map = {
-            "bitcoin": "BTCUSDT",
-            "ethereum": "ETHUSDT",
-            "solana": "SOLUSDT",
-            "polkadot": "DOTUSDT",
-        }
-
-        symbol = symbol_map.get(coin_id)
-
-        if symbol:
-            url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
-            r = requests.get(url, timeout=10)
-
-            if r.status_code == 200:
-                data = r.json()
-                if isinstance(data, dict) and "price" in data:
-                    return float(data["price"])
-
-    except Exception:
-        pass
+    for provider in providers:
+        try:
+            price = provider(coin_id)
+            if price is not None and price > 0:
+                return float(price)
+        except Exception:
+            continue
 
     return None
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1800)
 def get_usdczk():
+    data = safe_get_json("https://open.er-api.com/v6/latest/USD", timeout=12)
     try:
-        r = requests.get("https://open.er-api.com/v6/latest/USD", timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        if isinstance(data, dict) and "rates" in data and "CZK" in data["rates"]:
-            return float(data["rates"]["CZK"])
+        return float(data["rates"]["CZK"])
     except Exception:
         pass
 
+    data = safe_get_json("https://api.exchangerate-api.com/v4/latest/USD", timeout=12)
     try:
-        r = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        if isinstance(data, dict) and "rates" in data and "CZK" in data["rates"]:
-            return float(data["rates"]["CZK"])
+        return float(data["rates"]["CZK"])
+    except Exception:
+        pass
+
+    data = safe_get_json(
+        "https://api.frankfurter.dev/v1/latest",
+        params={"base": "EUR", "symbols": "CZK,USD"},
+        timeout=12,
+    )
+    try:
+        eur_to_czk = float(data["rates"]["CZK"])
+        eur_to_usd = float(data["rates"]["USD"])
+        if eur_to_usd > 0:
+            return eur_to_czk / eur_to_usd
     except Exception:
         pass
 
@@ -589,6 +720,24 @@ def build_portfolio(df: pd.DataFrame) -> dict:
     return portfolio
 
 
+def resolve_price_with_fallback(coin_name: str, amount_now: float = 0.0, cost_usd: float = 0.0):
+    price_now = get_crypto_price(coin_name)
+
+    if price_now is not None:
+        LAST_KNOWN_PRICES[coin_name] = float(price_now)
+        save_price_cache(LAST_KNOWN_PRICES)
+        return float(price_now)
+
+    cached_price = LAST_KNOWN_PRICES.get(coin_name)
+    if cached_price is not None:
+        return float(cached_price)
+
+    if amount_now > 0 and cost_usd > 0:
+        return float(cost_usd / amount_now)
+
+    return None
+
+
 def get_coin_metrics(portfolio: dict, usdczk: float):
     metrics = {}
     unavailable_prices = []
@@ -599,13 +748,11 @@ def get_coin_metrics(portfolio: dict, usdczk: float):
         cost_usd = float(data["cost"])
         avg_buy_price = float(data["avg_buy_price"])
 
-        price_now = get_crypto_price(coin)
-
-        # Stabilní fallback: pokud live API selže, použij poslední známou cenu
-        if price_now is not None:
-            LAST_KNOWN_PRICES[coin] = price_now
-        else:
-            price_now = LAST_KNOWN_PRICES.get(coin)
+        price_now = resolve_price_with_fallback(
+            coin_name=coin,
+            amount_now=amount,
+            cost_usd=cost_usd,
+        )
 
         if amount > 0 and price_now is not None:
             value_usd = amount * price_now
@@ -678,6 +825,7 @@ def format_amount(value):
 
 
 inject_css()
+LAST_KNOWN_PRICES.update(load_price_cache())
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -926,7 +1074,11 @@ with x1:
 with x2:
     render_summary_card("Cash rezerva", fmt_czk(invest_cash_balance_czk), "Volná hotovost v plánech")
 with x3:
-    render_summary_card("Celkem XTB", fmt_czk(invest_total_value_czk_base), f"Výsledek {((invest_total_pnl_czk_base / invest_total_cost_czk_base) * 100 if invest_total_cost_czk_base > 0 else 0.0):+.2f}%")
+    render_summary_card(
+        "Celkem XTB",
+        fmt_czk(invest_total_value_czk_base),
+        f"Výsledek {((invest_total_pnl_czk_base / invest_total_cost_czk_base) * 100 if invest_total_cost_czk_base > 0 else 0.0):+.2f}%",
+    )
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 

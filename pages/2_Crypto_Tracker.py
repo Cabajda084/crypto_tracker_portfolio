@@ -22,6 +22,47 @@ MAIN_COINS = {"bitcoin", "ethereum", "solana"}
 DOT_COIN = "polkadot"
 LAST_KNOWN_PRICES = {}
 
+REQUEST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (MyPortfolio/1.0; Streamlit)",
+    "Accept": "application/json",
+}
+
+BINANCE_SYMBOL_MAP = {
+    "bitcoin": "BTCUSDT",
+    "ethereum": "ETHUSDT",
+    "solana": "SOLUSDT",
+    "polkadot": "DOTUSDT",
+}
+
+KRAKEN_PAIR_MAP = {
+    "bitcoin": "XBTUSD",
+    "ethereum": "ETHUSD",
+    "solana": "SOLUSD",
+    "polkadot": "DOTUSD",
+}
+
+COINBASE_SYMBOL_MAP = {
+    "bitcoin": "BTC",
+    "ethereum": "ETH",
+    "solana": "SOL",
+    "polkadot": "DOT",
+}
+
+
+def normalize_coin(coin: str) -> str:
+    c = (coin or "").strip().lower()
+    mapping = {
+        "eth": "ethereum",
+        "ether": "ethereum",
+        "ethereum": "ethereum",
+        "btc": "bitcoin",
+        "bitcoin": "bitcoin",
+        "sol": "solana",
+        "solana": "solana",
+        "dot": "polkadot",
+        "polkadot": "polkadot",
+    }
+    return mapping.get(c, c)
 
 
 def load_price_cache() -> dict:
@@ -47,6 +88,101 @@ def save_price_cache(cache: dict) -> None:
             json.dump(cache, f, ensure_ascii=False, indent=2)
     except Exception:
         pass
+
+
+def safe_get_json(url: str, params: dict | None = None, timeout: int = 10):
+    try:
+        r = requests.get(
+            url,
+            params=params,
+            headers=REQUEST_HEADERS,
+            timeout=timeout,
+        )
+        if r.status_code == 200:
+            return r.json()
+    except Exception:
+        pass
+    return None
+
+
+def get_price_from_coingecko(coin_id: str):
+    data = safe_get_json(
+        "https://api.coingecko.com/api/v3/simple/price",
+        params={"ids": coin_id, "vs_currencies": "usd"},
+        timeout=10,
+    )
+    if isinstance(data, dict) and coin_id in data and "usd" in data[coin_id]:
+        try:
+            return float(data[coin_id]["usd"])
+        except Exception:
+            pass
+    return None
+
+
+def get_price_from_binance(coin_id: str):
+    symbol = BINANCE_SYMBOL_MAP.get(coin_id)
+    if not symbol:
+        return None
+
+    endpoints = [
+        "https://api.binance.com/api/v3/ticker/price",
+        "https://api-gcp.binance.com/api/v3/ticker/price",
+        "https://api1.binance.com/api/v3/ticker/price",
+        "https://api2.binance.com/api/v3/ticker/price",
+        "https://api3.binance.com/api/v3/ticker/price",
+        "https://api4.binance.com/api/v3/ticker/price",
+    ]
+
+    for endpoint in endpoints:
+        data = safe_get_json(endpoint, params={"symbol": symbol}, timeout=8)
+        if isinstance(data, dict) and "price" in data:
+            try:
+                return float(data["price"])
+            except Exception:
+                continue
+
+    return None
+
+
+def get_price_from_coinbase(coin_id: str):
+    symbol = COINBASE_SYMBOL_MAP.get(coin_id)
+    if not symbol:
+        return None
+
+    data = safe_get_json(
+        "https://api.coinbase.com/v2/exchange-rates",
+        params={"currency": symbol},
+        timeout=10,
+    )
+    try:
+        return float(data["data"]["rates"]["USD"])
+    except Exception:
+        return None
+
+
+def get_price_from_kraken(coin_id: str):
+    pair = KRAKEN_PAIR_MAP.get(coin_id)
+    if not pair:
+        return None
+
+    data = safe_get_json(
+        "https://api.kraken.com/0/public/Ticker",
+        params={"pair": pair},
+        timeout=10,
+    )
+
+    try:
+        result = data.get("result", {})
+        if not isinstance(result, dict):
+            return None
+
+        for _, pair_data in result.items():
+            if isinstance(pair_data, dict) and "c" in pair_data and pair_data["c"]:
+                return float(pair_data["c"][0])
+    except Exception:
+        pass
+
+    return None
 
 
 def resolve_price_with_fallback(coin_name: str, amount_now: float = 0.0, cost_usd: float = 0.0):
@@ -311,22 +447,6 @@ def save_data(df: pd.DataFrame) -> None:
     df.to_csv(DATA_FILE, index=False)
 
 
-def normalize_coin(coin: str) -> str:
-    c = (coin or "").strip().lower()
-    mapping = {
-        "eth": "ethereum",
-        "ether": "ethereum",
-        "ethereum": "ethereum",
-        "btc": "bitcoin",
-        "bitcoin": "bitcoin",
-        "sol": "solana",
-        "solana": "solana",
-        "dot": "polkadot",
-        "polkadot": "polkadot",
-    }
-    return mapping.get(c, c)
-
-
 def pretty_coin_name(coin: str) -> str:
     mapping = {
         "bitcoin": "Bitcoin",
@@ -427,62 +547,52 @@ def render_coin_card(row: pd.Series):
     )
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=45)
 def get_crypto_price(coin: str):
     coin_id = normalize_coin(coin)
 
-    try:
-        url = "https://api.coingecko.com/api/v3/simple/price"
-        params = {"ids": coin_id, "vs_currencies": "usd"}
-        r = requests.get(url, params=params, timeout=10)
+    providers = [
+        get_price_from_coingecko,
+        get_price_from_binance,
+        get_price_from_coinbase,
+        get_price_from_kraken,
+    ]
 
-        if r.status_code == 200:
-            data = r.json()
-            if isinstance(data, dict) and coin_id in data and "usd" in data[coin_id]:
-                return float(data[coin_id]["usd"])
-    except Exception:
-        pass
-
-    try:
-        symbol_map = {
-            "bitcoin": "BTCUSDT",
-            "ethereum": "ETHUSDT",
-            "solana": "SOLUSDT",
-            "polkadot": "DOTUSDT",
-        }
-        symbol = symbol_map.get(coin_id)
-
-        if symbol:
-            url = f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}"
-            r = requests.get(url, timeout=10)
-
-            if r.status_code == 200:
-                data = r.json()
-                if isinstance(data, dict) and "price" in data:
-                    return float(data["price"])
-    except Exception:
-        pass
+    for provider in providers:
+        try:
+            price = provider(coin_id)
+            if price is not None and price > 0:
+                return float(price)
+        except Exception:
+            continue
 
     return None
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1800)
 def get_usdczk():
+    data = safe_get_json("https://open.er-api.com/v6/latest/USD", timeout=12)
     try:
-        r = requests.get("https://open.er-api.com/v6/latest/USD", timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        if isinstance(data, dict) and "rates" in data and "CZK" in data["rates"]:
-            return float(data["rates"]["CZK"])
+        return float(data["rates"]["CZK"])
     except Exception:
         pass
 
+    data = safe_get_json("https://api.exchangerate-api.com/v4/latest/USD", timeout=12)
     try:
-        r = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        if isinstance(data, dict) and "rates" in data and "CZK" in data["rates"]:
-            return float(data["rates"]["CZK"])
+        return float(data["rates"]["CZK"])
+    except Exception:
+        pass
+
+    data = safe_get_json(
+        "https://api.frankfurter.dev/v1/latest",
+        params={"base": "EUR", "symbols": "CZK,USD"},
+        timeout=12,
+    )
+    try:
+        eur_to_czk = float(data["rates"]["CZK"])
+        eur_to_usd = float(data["rates"]["USD"])
+        if eur_to_usd > 0:
+            return eur_to_czk / eur_to_usd
     except Exception:
         pass
 
