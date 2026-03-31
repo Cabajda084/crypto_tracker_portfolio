@@ -478,7 +478,7 @@ def save_price_cache(cache: dict) -> None:
         pass
 
 
-def safe_get_json(url: str, params: dict | None = None, timeout: int = 10):
+def safe_get_json(url: str, params: dict = None, timeout: int = 10):
     try:
         r = requests.get(
             url,

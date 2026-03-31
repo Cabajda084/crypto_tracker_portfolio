@@ -90,7 +90,7 @@ def save_price_cache(cache: dict) -> None:
         pass
 
 
-def safe_get_json(url: str, params: dict | None = None, timeout: int = 10):
+def safe_get_json(url: str, params: dict = None, timeout: int = 10):
     try:
         r = requests.get(
             url,
@@ -428,9 +428,6 @@ def inject_css():
 inject_css()
 LAST_KNOWN_PRICES.update(load_price_cache())
 
-if "editing_transaction_idx" not in st.session_state:
-    st.session_state.editing_transaction_idx = None
-
 
 # =========================================================
 # HELPERS
@@ -448,14 +445,6 @@ def load_data() -> pd.DataFrame:
 
 def save_data(df: pd.DataFrame) -> None:
     df.to_csv(DATA_FILE, index=False)
-
-
-def get_transaction_row_label(row: pd.Series, idx: int) -> str:
-    date_val = str(row.get("date", ""))
-    coin_val = pretty_coin_name(normalize_coin(str(row.get("coin", ""))))
-    amount_val = format_amount_exact(float(row.get("amount", 0.0) or 0.0))
-    price_val = f"{float(row.get('price', 0.0) or 0.0):.2f}"
-    return f"#{idx + 1} · {date_val} · {coin_val} · {amount_val} ks · ${price_val}"
 
 
 def pretty_coin_name(coin: str) -> str:
@@ -498,8 +487,8 @@ def format_amount_exact(value: float) -> str:
 def render_summary_card(
     label: str,
     value_main: str,
-    value_sub: str | None = None,
-    delta: str | None = None,
+    value_sub: str = None,
+    delta: str = None,
     positive: bool = True,
 ):
     sub_html = f'<div class="summary-subvalue">{value_sub}</div>' if value_sub else ""
@@ -698,7 +687,7 @@ def format_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def summarize_portfolio_group(portfolio: dict, include_coins: set[str]) -> dict:
+def summarize_portfolio_group(portfolio: dict, include_coins: set) -> dict:
     invested_usd = 0.0
     value_usd = 0.0
     has_any = False
@@ -999,103 +988,6 @@ with right:
 st.markdown('<div class="section-title">Transakce</div>', unsafe_allow_html=True)
 st.dataframe(format_transactions_df(df), use_container_width=True, hide_index=True)
 
-st.markdown("")
-st.markdown('<div class="section-title">Správa nákupů</div>', unsafe_allow_html=True)
-
-if df.empty:
-    st.info("Zatím tu nejsou žádné nákupy k úpravě.")
-else:
-    for idx, row in df.reset_index(drop=True).iterrows():
-        row_label = get_transaction_row_label(row, idx)
-
-        col_info, col_btn = st.columns([5, 1])
-        with col_info:
-            st.markdown(
-                f"""
-                <div class="section-card" style="padding:12px 14px; margin-bottom:8px;">
-                    <div class="small-muted">{row_label}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with col_btn:
-            if st.button("Upravit", key=f"edit_tx_{idx}", use_container_width=True):
-                st.session_state.editing_transaction_idx = idx
-                st.rerun()
-
-if st.session_state.editing_transaction_idx is not None and not df.empty:
-    edit_idx = int(st.session_state.editing_transaction_idx)
-
-    if 0 <= edit_idx < len(df):
-        edit_row = df.iloc[edit_idx].copy()
-
-        st.markdown("")
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Upravit nákup</div>', unsafe_allow_html=True)
-
-        try:
-            parsed_date = pd.to_datetime(edit_row["date"]).date()
-        except Exception:
-            parsed_date = datetime.today().date()
-
-        normalized_edit_coin = normalize_coin(str(edit_row.get("coin", "")))
-        if normalized_edit_coin not in TRACKED_COINS:
-            normalized_edit_coin = TRACKED_COINS[0]
-
-        with st.form(f"edit_buy_form_{edit_idx}"):
-            ef1, ef2 = st.columns(2)
-
-            with ef1:
-                edit_date = st.date_input("Datum", value=parsed_date, key=f"edit_date_{edit_idx}")
-                edit_coin = st.selectbox(
-                    "Coin",
-                    TRACKED_COINS,
-                    index=TRACKED_COINS.index(normalized_edit_coin),
-                    key=f"edit_coin_{edit_idx}",
-                )
-
-            with ef2:
-                edit_amount = st.number_input(
-                    "Množství",
-                    min_value=0.0,
-                    value=float(edit_row.get("amount", 0.0) or 0.0),
-                    step=0.00000001,
-                    format="%.8f",
-                    key=f"edit_amount_{edit_idx}",
-                )
-                edit_price = st.number_input(
-                    "Cena při nákupu (USD)",
-                    min_value=0.0,
-                    value=float(edit_row.get("price", 0.0) or 0.0),
-                    step=0.01,
-                    format="%.2f",
-                    key=f"edit_price_{edit_idx}",
-                )
-
-            save_col, cancel_col = st.columns(2)
-            with save_col:
-                save_edit = st.form_submit_button("Uložit změny", use_container_width=True)
-            with cancel_col:
-                cancel_edit = st.form_submit_button("Zrušit", use_container_width=True)
-
-        if save_edit:
-            df.at[edit_idx, "date"] = str(edit_date)
-            df.at[edit_idx, "coin"] = normalize_coin(edit_coin)
-            df.at[edit_idx, "amount"] = float(edit_amount)
-            df.at[edit_idx, "price"] = float(edit_price)
-            save_data(df)
-            st.session_state.editing_transaction_idx = None
-            st.success("Nákup byl upraven.")
-            st.rerun()
-
-        if cancel_edit:
-            st.session_state.editing_transaction_idx = None
-            st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-    else:
-        st.session_state.editing_transaction_idx = None
-
 
 # =========================================================
 # PORTFOLIO TABLE
@@ -1127,4 +1019,3 @@ if not portfolio_df.empty and PLOTLY_AVAILABLE:
             height=380,
         )
         st.plotly_chart(fig, use_container_width=True)
-2) Portfolio Overvi
