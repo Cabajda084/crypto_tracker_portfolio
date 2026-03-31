@@ -31,8 +31,6 @@ DATA_FILE = "transactions.csv"
 PRICE_CACHE_FILE = "crypto_price_cache.json"
 TRACKED_COINS = ["bitcoin", "ethereum", "solana", "polkadot"]
 
-# Poslední známé ceny v rámci běžící app session / procesu.
-# Když externí API krátce selže, portfolio nespadne na 0.
 LAST_KNOWN_PRICES = {}
 
 REQUEST_HEADERS = {
