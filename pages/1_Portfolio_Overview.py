@@ -64,36 +64,35 @@ def inject_css():
     st.markdown(
         """
         <style>
-        [data-testid="stHeader"] {
-            display: none;
-        }
-
+        [data-testid="stHeader"],
         [data-testid="stToolbar"] {
             display: none;
         }
 
-        #MainMenu {
-            visibility: hidden;
-        }
-
+        #MainMenu,
         footer {
             visibility: hidden;
         }
 
+        html, body, [class*="css"] {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         .block-container {
-            max-width: 1280px;
-            padding-top: 0.9rem;
-            padding-bottom: 6rem;
-            padding-left: 0.9rem;
-            padding-right: 0.9rem;
+            max-width: 1100px;
+            padding-top: 0.65rem;
+            padding-bottom: 5rem;
+            padding-left: 0.85rem;
+            padding-right: 0.85rem;
         }
 
         .nav-row {
-            margin-bottom: 0.65rem;
+            margin-bottom: 0.55rem;
         }
 
         .nav-row div[data-testid="stButton"] > button {
-            min-height: 42px;
+            min-height: 40px;
             border-radius: 14px;
             background: #ffffff;
             color: #111827;
@@ -101,116 +100,186 @@ def inject_css():
             box-shadow: none;
             font-size: 0.9rem;
             white-space: nowrap;
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.15rem;
         }
 
         .page-hero {
-            background: linear-gradient(135deg, #312e81 0%, #4338ca 55%, #7c3aed 100%);
-            border-radius: 28px;
-            padding: 24px 22px;
+            background: linear-gradient(135deg, #312e81 0%, #4338ca 52%, #7c3aed 100%);
+            border-radius: 24px;
+            padding: 16px 16px 15px 16px;
             color: white;
-            box-shadow: 0 16px 40px rgba(67, 56, 202, 0.18);
-            margin-bottom: 1rem;
+            box-shadow: 0 12px 28px rgba(67, 56, 202, 0.14);
+            margin-bottom: 0.7rem;
+        }
+
+        .page-hero-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 0.4rem;
         }
 
         .page-badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.14);
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             color: white;
             border-radius: 999px;
-            padding: 6px 12px;
-            font-size: 0.78rem;
+            padding: 5px 10px;
+            font-size: 0.75rem;
             font-weight: 700;
-            margin-bottom: 0.8rem;
         }
 
         .page-title {
-            font-size: 2.1rem;
-            line-height: 1.02;
+            font-size: 1.35rem;
+            line-height: 1.05;
             font-weight: 800;
-            margin-bottom: 0.45rem;
+            margin: 0 0 0.2rem 0;
         }
 
         .page-subtitle {
-            color: rgba(255, 255, 255, 0.92);
-            font-size: 0.98rem;
-            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 0.92rem;
+            line-height: 1.38;
+            margin: 0;
         }
 
-        .hero-card,
+        .overview-card,
         .summary-card,
         .asset-card {
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: 24px;
-            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+            border-radius: 22px;
+            box-shadow: 0 8px 26px rgba(15, 23, 42, 0.05);
         }
 
-        .hero-card {
-            padding: 24px 24px;
-            margin-bottom: 1rem;
+        .overview-card {
+            padding: 16px;
+            margin-bottom: 0.75rem;
             background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
         }
 
-        .hero-metric {
-            background: #ffffff;
-            border: 1px solid #eceff3;
-            border-radius: 20px;
-            padding: 16px 18px;
-        }
-
-        .hero-label {
-            font-size: 0.88rem;
+        .overview-kicker {
             color: #6b7280;
-            margin-bottom: 0.42rem;
+            font-size: 0.82rem;
             font-weight: 700;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
 
-        .hero-value {
-            font-size: 2.25rem;
-            line-height: 1.05;
-            font-weight: 800;
+        .overview-total {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 0.2rem;
+        }
+
+        .overview-total-value {
             color: #111827;
-            margin-bottom: 0.15rem;
+            font-size: clamp(1.85rem, 5vw, 2.5rem);
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            white-space: nowrap;
         }
 
-        .hero-subvalue {
+        .overview-total-currency {
+            color: #4b5563;
+            font-size: 0.95rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .overview-caption {
             color: #6b7280;
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 0.88rem;
+            line-height: 1.35;
+            margin-bottom: 0.85rem;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .overview-metric {
+            border: 1px solid #eef0f3;
+            border-radius: 16px;
+            padding: 12px 12px;
+            background: #ffffff;
+            min-width: 0;
+        }
+
+        .overview-metric-label {
+            color: #6b7280;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .overview-metric-value {
+            color: #111827;
+            font-size: clamp(1rem, 3.8vw, 1.2rem);
+            line-height: 1.08;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .overview-metric-meta {
+            color: #6b7280;
+            font-size: 0.8rem;
+            line-height: 1.25;
+            margin-top: 0.25rem;
         }
 
         .summary-card {
-            padding: 18px 18px;
+            padding: 15px 15px;
             height: 100%;
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.65rem;
         }
 
         .summary-label {
             color: #6b7280;
-            font-size: 0.88rem;
-            margin-bottom: 0.45rem;
-            font-weight: 600;
+            font-size: 0.82rem;
+            margin-bottom: 0.32rem;
+            font-weight: 700;
+            line-height: 1.25;
         }
 
         .summary-value {
             color: #111827;
-            font-size: 1.75rem;
-            line-height: 1.08;
+            font-size: clamp(1.2rem, 4vw, 1.55rem);
+            line-height: 1.05;
             font-weight: 800;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.22rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .summary-meta {
             color: #6b7280;
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 0.82rem;
+            line-height: 1.3;
+        }
+
+        .section-intro {
+            margin: 0.25rem 0 0.45rem 0;
+            color: #6b7280;
+            font-size: 0.88rem;
         }
 
         .asset-card {
-            padding: 15px 16px;
-            margin-bottom: 0.72rem;
+            padding: 14px 14px;
+            margin-bottom: 0.6rem;
             background: linear-gradient(180deg, #ffffff 0%, #fbfbfb 100%);
         }
 
@@ -218,44 +287,52 @@ def inject_css():
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 14px;
+            gap: 12px;
+        }
+
+        .asset-left,
+        .asset-right {
+            min-width: 0;
         }
 
         .asset-title {
             color: #111827;
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 800;
-            margin-bottom: 0.22rem;
+            margin-bottom: 0.18rem;
+            line-height: 1.2;
         }
 
         .asset-sub {
             color: #6b7280;
-            font-size: 0.89rem;
-            line-height: 1.4;
+            font-size: 0.84rem;
+            line-height: 1.32;
         }
 
         .asset-value {
             color: #111827;
-            font-size: 1.2rem;
+            font-size: 1.06rem;
             font-weight: 800;
             text-align: right;
-            line-height: 1.12;
+            line-height: 1.06;
+            white-space: nowrap;
         }
 
         .asset-pnl {
-            font-size: 0.9rem;
+            font-size: 0.84rem;
             text-align: right;
-            margin-top: 0.2rem;
+            margin-top: 0.24rem;
         }
 
         .pill-positive,
         .pill-negative,
         .pill-neutral {
             display: inline-block;
-            padding: 0.28rem 0.6rem;
+            padding: 0.24rem 0.54rem;
             border-radius: 999px;
-            font-size: 0.84rem;
+            font-size: 0.78rem;
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .pill-positive {
@@ -274,7 +351,7 @@ def inject_css():
         }
 
         .mobile-expander {
-            margin-bottom: 0.9rem;
+            margin-bottom: 0.65rem;
         }
 
         .mobile-expander [data-testid="stExpander"] {
@@ -284,60 +361,111 @@ def inject_css():
 
         .mobile-expander [data-testid="stExpander"] details {
             border: 1px solid #e5e7eb;
-            border-radius: 22px;
+            border-radius: 20px;
             background: #ffffff;
-            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+            box-shadow: 0 8px 26px rgba(15, 23, 42, 0.05);
             overflow: hidden;
+        }
+
+        .mobile-expander [data-testid="stExpander"] summary {
+            padding-top: 0.1rem;
+            padding-bottom: 0.1rem;
+        }
+
+        .portfolio-expander-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .portfolio-expander-left {
+            min-width: 0;
+        }
+
+        .portfolio-expander-title {
+            color: #111827;
+            font-size: 0.98rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.15rem;
+        }
+
+        .portfolio-expander-subtitle {
+            color: #6b7280;
+            font-size: 0.82rem;
+            line-height: 1.25;
+        }
+
+        .portfolio-expander-amount {
+            color: #111827;
+            font-size: 0.98rem;
+            font-weight: 800;
+            white-space: nowrap;
+            text-align: right;
+            margin-left: auto;
         }
 
         @media (max-width: 768px) {
             .block-container {
-                padding-top: 0.75rem;
-                padding-left: 0.8rem;
-                padding-right: 0.8rem;
-                padding-bottom: 6.5rem;
+                padding-top: 0.55rem;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+                padding-bottom: 5.5rem;
             }
 
             .page-hero,
-            .hero-card,
+            .overview-card,
             .summary-card,
-            .asset-card {
-                border-radius: 20px;
+            .asset-card,
+            .mobile-expander [data-testid="stExpander"] details {
+                border-radius: 18px;
             }
 
             .page-hero {
-                padding: 18px 16px;
-                margin-bottom: 0.85rem;
+                padding: 14px 14px 13px 14px;
+                margin-bottom: 0.65rem;
             }
 
             .page-title {
-                font-size: 1.7rem;
+                font-size: 1.18rem;
             }
 
             .page-subtitle {
-                font-size: 0.94rem;
+                font-size: 0.86rem;
             }
 
-            .hero-card {
-                padding: 18px 16px;
+            .overview-card {
+                padding: 14px;
             }
 
-            .hero-value {
-                font-size: 1.95rem;
+            .overview-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
             }
 
             .summary-value {
-                font-size: 1.45rem;
+                white-space: normal;
+                overflow: visible;
+                text-overflow: unset;
             }
 
-            .asset-top {
+            .asset-top,
+            .portfolio-expander-label {
                 display: block;
             }
 
+            .asset-right {
+                margin-top: 0.55rem;
+            }
+
             .asset-value,
-            .asset-pnl {
+            .asset-pnl,
+            .portfolio-expander-amount {
                 text-align: left;
-                margin-top: 0.5rem;
+                margin-top: 0.35rem;
             }
         }
         </style>
@@ -373,11 +501,11 @@ def render_asset_card(title, subtitle, value, pnl_text="", pnl_positive=None):
         f"""
         <div class="asset-card">
             <div class="asset-top">
-                <div>
+                <div class="asset-left">
                     <div class="asset-title">{title}</div>
                     <div class="asset-sub">{subtitle}</div>
                 </div>
-                <div>
+                <div class="asset-right">
                     <div class="asset-value">{value}</div>
                     <div class="asset-pnl">{pnl_html}</div>
                 </div>
@@ -386,6 +514,18 @@ def render_asset_card(title, subtitle, value, pnl_text="", pnl_positive=None):
         """,
         unsafe_allow_html=True,
     )
+
+
+def render_expander_label(icon, title, subtitle, amount):
+    return f"""
+        <div class="portfolio-expander-label">
+            <div class="portfolio-expander-left">
+                <div class="portfolio-expander-title">{icon} {title}</div>
+                <div class="portfolio-expander-subtitle">{subtitle}</div>
+            </div>
+            <div class="portfolio-expander-amount">{amount}</div>
+        </div>
+    """
 
 
 def normalize_coin(coin):
@@ -773,6 +913,13 @@ def format_amount(value):
     return f"{value:.8f}".rstrip("0").rstrip(".")
 
 
+def value_and_currency(value_str: str):
+    parts = value_str.rsplit(" ", 1)
+    if len(parts) == 2:
+        return parts[0], parts[1]
+    return value_str, ""
+
+
 inject_css()
 LAST_KNOWN_PRICES.update(load_price_cache())
 
@@ -780,28 +927,24 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 st.markdown('<div class="nav-row">', unsafe_allow_html=True)
-
 nav1, nav2, nav3 = st.columns([1, 1, 4])
-
 with nav1:
     if st.button("← Domů"):
         st.switch_page("Start.py")
-
 with nav2:
     if st.button("Odhlásit se"):
         st.session_state.authenticated = False
         st.switch_page("Start.py")
-
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown(
     """
     <div class="page-hero">
-        <div class="page-badge">PŘEHLED</div>
-        <div class="page-title">Moje portfolio</div>
-        <div class="page-subtitle">
-            Mobile-first přehled investic s důrazem na jednoduchou orientaci a rozbalovací detaily.
+        <div class="page-hero-top">
+            <div class="page-badge">📊 Portfolio overview</div>
         </div>
+        <div class="page-title">Moje investice</div>
+        <p class="page-subtitle">Přehled portfolia v kompaktnějším mobilním layoutu bez změny funkčnosti.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -878,34 +1021,57 @@ investown_projects_count = investown_summary["projects_count"]
 # =========================================================
 net_worth_czk = crypto_total_value_czk + invest_total_value_czk + investown_total_value_czk
 total_invested_czk = crypto_total_cost_czk + invest_total_cost_czk + investown_total_cost_czk
+total_result_czk = net_worth_czk - total_invested_czk
+total_result_pct = (total_result_czk / total_invested_czk) * 100 if total_invested_czk > 0 else 0.0
+
+overview_value, overview_currency = value_and_currency(fmt_czk(net_worth_czk))
+invested_value, invested_currency = value_and_currency(fmt_czk(total_invested_czk))
 
 # =========================================================
-# HERO - ONLY TOTAL INVESTED
+# OVERVIEW CARD
 # =========================================================
 st.markdown(
     f"""
-    <div class="hero-card">
-        <div class="hero-metric">
-            <div class="hero-label">Celkem investováno</div>
-            <div class="hero-value">{fmt_czk(total_invested_czk)}</div>
-            <div class="hero-subvalue">Součet všech vložených prostředků napříč kryptem, XTB, My Trades a Investownem</div>
+    <div class="overview-card">
+        <div class="overview-kicker">Portfolio tracker</div>
+        <div class="overview-total">
+            <div class="overview-total-value">{overview_value}</div>
+            <div class="overview-total-currency">{overview_currency}</div>
+        </div>
+        <div class="overview-caption">Aktuální hodnota celého portfolia napříč kryptem, XTB, My Trades a Investownem.</div>
+
+        <div class="overview-grid">
+            <div class="overview-metric">
+                <div class="overview-metric-label">Celkem investováno</div>
+                <div class="overview-metric-value">{fmt_czk(total_invested_czk)}</div>
+                <div class="overview-metric-meta">Součet všech vložených prostředků</div>
+            </div>
+            <div class="overview-metric">
+                <div class="overview-metric-label">Celkový výsledek</div>
+                <div class="overview-metric-value">{fmt_czk(total_result_czk)}</div>
+                <div class="overview-metric-meta">{total_result_pct:+.2f}% oproti investované částce</div>
+            </div>
         </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-render_summary_card(
-    "Aktuální hodnota portfolia",
-    fmt_czk(net_worth_czk),
-    "Konzervativní součet všech částí portfolia",
-)
-
 # =========================================================
 # CRYPTO
 # =========================================================
 st.markdown('<div class="mobile-expander">', unsafe_allow_html=True)
-with st.expander(f"₿ Kryptoměny · Celkem investováno {fmt_czk(crypto_total_cost_czk)}", expanded=False):
+with st.expander(
+    render_expander_label(
+        "₿",
+        "Kryptoměny",
+        "Souhrn krypto části portfolia",
+        fmt_czk(crypto_total_cost_czk),
+    ),
+    expanded=False,
+):
+    st.markdown('<div class="section-intro">Celkem investováno a aktuální hodnota kryptoměnové části.</div>', unsafe_allow_html=True)
+
     c1, c2, c3 = st.columns(3)
     with c1:
         render_summary_card("Celkem investováno", format_usd(total_cost_usd), format_czk_crypto(total_cost_usd * usdczk))
@@ -934,12 +1100,26 @@ st.markdown('</div>', unsafe_allow_html=True)
 # XTB + MY TRADES
 # =========================================================
 st.markdown('<div class="mobile-expander">', unsafe_allow_html=True)
-with st.expander(f"📈 XTB + My Trades · Celkem investováno {fmt_czk(invest_total_cost_czk)}", expanded=False):
+with st.expander(
+    render_expander_label(
+        "📈",
+        "XTB + My Trades",
+        "Akcie, ETF a ruční obchody",
+        fmt_czk(invest_total_cost_czk),
+    ),
+    expanded=False,
+):
+    st.markdown('<div class="section-intro">Kombinovaný přehled XTB investičních plánů a My Trades pozic.</div>', unsafe_allow_html=True)
+
     top_left, top_right = st.columns(2)
     with top_left:
         render_summary_card("Celkem investováno", fmt_czk(invest_total_cost_czk), "XTB + My Trades dohromady")
     with top_right:
-        render_summary_card("Aktuální hodnota", fmt_czk(invest_total_value_czk), f"Výsledek {fmt_czk(invest_total_pnl_czk)} · {invest_total_pnl_pct:+.2f}%")
+        render_summary_card(
+            "Aktuální hodnota",
+            fmt_czk(invest_total_value_czk),
+            f"Výsledek {fmt_czk(invest_total_pnl_czk)} · {invest_total_pnl_pct:+.2f}%",
+        )
 
     st.subheader("XTB")
     x1, x2, x3 = st.columns(3)
@@ -1000,7 +1180,17 @@ st.markdown('</div>', unsafe_allow_html=True)
 # INVESTOWN
 # =========================================================
 st.markdown('<div class="mobile-expander">', unsafe_allow_html=True)
-with st.expander(f"🏠 Investown · Celkem investováno {fmt_czk(investown_total_cost_czk)}", expanded=False):
+with st.expander(
+    render_expander_label(
+        "🏠",
+        "Investown",
+        "Nemovitostní část portfolia",
+        fmt_czk(investown_total_cost_czk),
+    ),
+    expanded=False,
+):
+    st.markdown('<div class="section-intro">Přehled investovaných prostředků, konzervativní hodnoty a úrokového výnosu.</div>', unsafe_allow_html=True)
+
     j1, j2 = st.columns(2)
     with j1:
         render_summary_card("Celkem investováno", fmt_czk(investown_total_cost_czk), "Součet investovaných prostředků")
